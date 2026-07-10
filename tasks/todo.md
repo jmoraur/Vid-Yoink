@@ -39,6 +39,13 @@ Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
       processes, DB writable; TERM mid-download → all stopped in 1s, job 'cancelled',
       .part kept; double-launch doesn't kill the first instance's server.)*
 
+## Deferred / future reference
+
+- **Public cross-platform distribution** — analyzed 2026-07-10, deliberately deferred;
+  the app stays local. Options and tradeoffs (downstream packaging fixes vs. upstream
+  re-architecture, tool-vs-appliance decision, what survives a rewrite) are in
+  [distribution-plan.md](distribution-plan.md).
+
 ## Notes
 
 - yt-dlp warns about a missing JavaScript runtime for YouTube ("some formats may be
