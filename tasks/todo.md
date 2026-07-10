@@ -25,7 +25,10 @@ Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
       download_archive, archive browser, history filters.
       Verify: cancel mid-download; re-submit same URL after moving file → skipped; delete
       archive row → re-downloads.
-- [ ] **M4 — Subscriptions + scheduler**: CRUD, check-now, seed-existing, 60s asyncio
+- [x] **M4 — Subscriptions + scheduler** *(done 2026-07-10: seeded 13 items without
+      downloading; check-now after seed → 0 new; deleted 2 archive rows → check enqueued
+      exactly 2 jobs with the sub's audio preset, tagged subscription_id; re-check → 0;
+      1-min interval fired automatically and rescheduled.)*: CRUD, check-now, seed-existing, 60s asyncio
       scheduler loop, WS event + page.
       Verify: seed → check-now → 0 new; un-seeded playlist → N jobs; second check → 0 new;
       1-min interval fires automatically.

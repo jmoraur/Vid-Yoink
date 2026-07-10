@@ -1,0 +1,193 @@
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
+import { api } from '../api/client'
+import type { Subscription, SubscriptionIn } from '../api/types'
+
+const EMPTY: SubscriptionIn = {
+  name: '',
+  url: '',
+  preset_id: null,
+  enabled: true,
+  check_interval_minutes: null,
+}
+
+function SubscriptionEditor({
+  sub,
+  onDone,
+}: {
+  sub: Subscription | null // null = creating
+  onDone: () => void
+}) {
+  const [form, setForm] = useState<SubscriptionIn>(sub ?? EMPTY)
+  const [seedExisting, setSeedExisting] = useState(sub === null)
+  const queryClient = useQueryClient()
+  const presets = useQuery({ queryKey: ['presets'], queryFn: api.listPresets })
+  const save = useMutation({
+    mutationFn: async () => {
+      if (sub) return api.updateSubscription(sub.id, form)
+      const created = await api.createSubscription(form)
+      if (seedExisting) await api.seedSubscription(created.id)
+      return created
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+      onDone()
+    },
+  })
+
+  return (
+    <div className="preset-editor">
+      <div className="row">
+        <label className="grow">
+          Name
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            autoFocus
+          />
+        </label>
+      </div>
+      <div className="row">
+        <label className="grow">
+          Playlist / channel URL
+          <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+        </label>
+      </div>
+      <div className="row">
+        <label>
+          Preset
+          <select
+            value={form.preset_id ?? ''}
+            onChange={(e) =>
+              setForm({ ...form, preset_id: e.target.value === '' ? null : Number(e.target.value) })
+            }
+          >
+            <option value="">Default options</option>
+            {presets.data?.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Auto-check every (minutes)
+          <input
+            type="number"
+            min={5}
+            value={form.check_interval_minutes ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                check_interval_minutes: e.target.value === '' ? null : Number(e.target.value),
+              })
+            }
+            placeholder="manual only"
+          />
+        </label>
+      </div>
+      <div className="row checks">
+        <label>
+          <input
+            type="checkbox"
+            checked={form.enabled}
+            onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
+          />
+          Enabled
+        </label>
+        {sub === null && (
+          <label title="Add everything currently in the playlist to the archive without downloading">
+            <input
+              type="checkbox"
+              checked={seedExisting}
+              onChange={(e) => setSeedExisting(e.target.checked)}
+            />
+            Mark existing items as already downloaded
+          </label>
+        )}
+      </div>
+      <div className="row actions">
+        <button
+          disabled={!form.name.trim() || !form.url.trim() || save.isPending}
+          onClick={() => save.mutate()}
+        >
+          {save.isPending ? 'Saving…' : sub ? 'Save changes' : 'Add subscription'}
+        </button>
+        <button className="small" onClick={onDone}>
+          Cancel
+        </button>
+        {save.isError && <span className="error">{save.error.message}</span>}
+      </div>
+    </div>
+  )
+}
+
+function SubscriptionRow({ sub }: { sub: Subscription }) {
+  const queryClient = useQueryClient()
+  const [editing, setEditing] = useState(false)
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+  const check = useMutation({ mutationFn: () => api.checkSubscription(sub.id), onSuccess: invalidate })
+  const remove = useMutation({ mutationFn: () => api.deleteSubscription(sub.id), onSuccess: invalidate })
+
+  if (editing) return <SubscriptionEditor sub={sub} onDone={() => setEditing(false)} />
+
+  return (
+    <div className={`job ${sub.enabled ? '' : 'disabled'}`}>
+      <div className="job-main">
+        <span className="job-title" title={sub.url}>
+          {sub.name}
+        </span>
+        <span className="muted">
+          {sub.check_interval_minutes
+            ? `every ${sub.check_interval_minutes} min`
+            : 'manual'}
+        </span>
+        <button className="small" disabled={check.isPending} onClick={() => check.mutate()}>
+          {check.isPending ? 'Checking…' : 'Check now'}
+        </button>
+        <button className="small" onClick={() => setEditing(true)}>
+          Edit
+        </button>
+        <button className="small" onClick={() => remove.mutate()}>
+          Delete
+        </button>
+      </div>
+      <p className="muted">
+        {sub.last_check_at
+          ? `Last check ${sub.last_check_at}: ${sub.last_check_result ?? ''}`
+          : 'Never checked.'}
+        {sub.enabled && sub.next_check_at && ` · next ${sub.next_check_at}`}
+        {' · '}
+        <Link to={`/archive?sub=${sub.id}`}>archive</Link>
+      </p>
+      {check.data?.error && <p className="error">{check.data.error}</p>}
+    </div>
+  )
+}
+
+export function Subscriptions() {
+  const [adding, setAdding] = useState(false)
+  const subs = useQuery({ queryKey: ['subscriptions'], queryFn: api.listSubscriptions })
+
+  return (
+    <div>
+      {adding ? (
+        <SubscriptionEditor sub={null} onDone={() => setAdding(false)} />
+      ) : (
+        <div className="page-actions">
+          <button onClick={() => setAdding(true)}>Add subscription</button>
+        </div>
+      )}
+      <section className="jobs">
+        {subs.data?.map((sub) => <SubscriptionRow key={sub.id} sub={sub} />)}
+        {subs.data?.length === 0 && !adding && (
+          <p className="muted">
+            No subscriptions yet. Add a playlist or channel to keep it in sync — only new
+            items get downloaded.
+          </p>
+        )}
+      </section>
+    </div>
+  )
+}

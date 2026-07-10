@@ -35,6 +35,7 @@ def _to_result(info: dict, archive_keys: set[str]) -> ProbeResult:
             entries=[
                 ProbeEntry(
                     id=e.get("id"),
+                    ie_key=e.get("ie_key"),
                     title=e.get("title"),
                     duration=e.get("duration"),
                     url=e.get("url") or e.get("webpage_url"),

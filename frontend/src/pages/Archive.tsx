@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 
 export function Archive() {
   const [q, setQ] = useState('')
+  const [params] = useSearchParams()
+  const subFilter = params.get('sub') ? Number(params.get('sub')) : undefined
   const queryClient = useQueryClient()
   const entries = useQuery({
-    queryKey: ['archive', q],
-    queryFn: () => api.listArchive(q || undefined),
+    queryKey: ['archive', q, subFilter],
+    queryFn: () => api.listArchive(q || undefined, subFilter),
   })
   const remove = useMutation({
     mutationFn: (id: number) => api.deleteArchiveEntry(id),

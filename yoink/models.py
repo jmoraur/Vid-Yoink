@@ -86,6 +86,7 @@ class ProbeRequest(BaseModel):
 
 class ProbeEntry(BaseModel):
     id: str | None = None
+    ie_key: str | None = None  # extractor key, for computing archive ids
     title: str | None = None
     duration: float | None = None
     url: str | None = None
@@ -116,6 +117,29 @@ class ArchiveEntryOut(BaseModel):
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> "ArchiveEntryOut":
         return cls(**{k: row[k] for k in cls.model_fields})
+
+
+class SubscriptionIn(BaseModel):
+    name: str
+    url: str
+    preset_id: int | None = None
+    enabled: bool = True
+    check_interval_minutes: int | None = None  # None = manual checks only
+
+
+class SubscriptionOut(SubscriptionIn):
+    id: int
+    last_check_at: str | None = None
+    next_check_at: str | None = None
+    last_check_result: str | None = None
+    created_at: str
+
+    @classmethod
+    def from_row(cls, row: sqlite3.Row) -> "SubscriptionOut":
+        return cls(
+            **{k: row[k] for k in cls.model_fields if k != "enabled"},
+            enabled=bool(row["enabled"]),
+        )
 
 
 class PresetIn(BaseModel):

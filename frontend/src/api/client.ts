@@ -1,4 +1,12 @@
-import type { ArchiveEntry, DownloadOptions, Job, Preset, ProbeResult } from './types'
+import type {
+  ArchiveEntry,
+  DownloadOptions,
+  Job,
+  Preset,
+  ProbeResult,
+  Subscription,
+  SubscriptionIn,
+} from './types'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -28,10 +36,32 @@ export const api = {
   deleteDownload: (id: number) =>
     request<{ ok: boolean }>(`/api/downloads/${id}`, { method: 'DELETE' }),
 
-  listArchive: (q?: string) =>
-    request<ArchiveEntry[]>(`/api/archive${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  listArchive: (q?: string, subscriptionId?: number) => {
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    if (subscriptionId != null) params.set('subscription_id', String(subscriptionId))
+    const qs = params.toString()
+    return request<ArchiveEntry[]>(`/api/archive${qs ? `?${qs}` : ''}`)
+  },
   deleteArchiveEntry: (id: number) =>
     request<{ ok: boolean }>(`/api/archive/${id}`, { method: 'DELETE' }),
+
+  listSubscriptions: () => request<Subscription[]>('/api/subscriptions'),
+  createSubscription: (sub: SubscriptionIn) =>
+    request<Subscription>('/api/subscriptions', { method: 'POST', body: JSON.stringify(sub) }),
+  updateSubscription: (id: number, sub: SubscriptionIn) =>
+    request<Subscription>(`/api/subscriptions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(sub),
+    }),
+  deleteSubscription: (id: number) =>
+    request<{ ok: boolean }>(`/api/subscriptions/${id}`, { method: 'DELETE' }),
+  checkSubscription: (id: number) =>
+    request<{ new_jobs: number; error: string | null }>(`/api/subscriptions/${id}/check`, {
+      method: 'POST',
+    }),
+  seedSubscription: (id: number) =>
+    request<{ seeded: number }>(`/api/subscriptions/${id}/seed`, { method: 'POST' }),
 
   probe: (url: string) =>
     request<ProbeResult>('/api/probe', { method: 'POST', body: JSON.stringify({ url }) }),

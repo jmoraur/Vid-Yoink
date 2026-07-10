@@ -7,7 +7,7 @@ Connections are cheap; every operation opens its own via session(), so any threa
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -213,6 +213,94 @@ def delete_archive_entry(archive_id: int) -> bool:
 def delete_job(job_id: int) -> bool:
     with session() as conn:
         return conn.execute("DELETE FROM jobs WHERE id = ?", (job_id,)).rowcount > 0
+
+
+# --- subscriptions ---
+
+
+def list_subscriptions() -> list[sqlite3.Row]:
+    with session() as conn:
+        return conn.execute("SELECT * FROM subscriptions ORDER BY name").fetchall()
+
+
+def get_subscription(sub_id: int) -> sqlite3.Row | None:
+    with session() as conn:
+        return conn.execute("SELECT * FROM subscriptions WHERE id = ?", (sub_id,)).fetchone()
+
+
+def create_subscription(
+    name: str,
+    url: str,
+    preset_id: int | None,
+    enabled: bool,
+    check_interval_minutes: int | None,
+) -> int:
+    next_check = _next_check(check_interval_minutes)
+    with session() as conn:
+        cur = conn.execute(
+            "INSERT INTO subscriptions"
+            " (name, url, preset_id, enabled, check_interval_minutes, next_check_at, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (name, url, preset_id, int(enabled), check_interval_minutes, next_check, utcnow()),
+        )
+        return cur.lastrowid
+
+
+def update_subscription(
+    sub_id: int,
+    name: str,
+    url: str,
+    preset_id: int | None,
+    enabled: bool,
+    check_interval_minutes: int | None,
+) -> bool:
+    with session() as conn:
+        cur = conn.execute(
+            "UPDATE subscriptions SET name = ?, url = ?, preset_id = ?, enabled = ?,"
+            " check_interval_minutes = ?, next_check_at = ? WHERE id = ?",
+            (
+                name,
+                url,
+                preset_id,
+                int(enabled),
+                check_interval_minutes,
+                _next_check(check_interval_minutes),
+                sub_id,
+            ),
+        )
+        return cur.rowcount > 0
+
+
+def delete_subscription(sub_id: int) -> bool:
+    with session() as conn:
+        return conn.execute("DELETE FROM subscriptions WHERE id = ?", (sub_id,)).rowcount > 0
+
+
+def due_subscriptions() -> list[sqlite3.Row]:
+    with session() as conn:
+        return conn.execute(
+            "SELECT * FROM subscriptions WHERE enabled = 1"
+            " AND check_interval_minutes IS NOT NULL AND next_check_at <= ?",
+            (utcnow(),),
+        ).fetchall()
+
+
+def record_subscription_check(sub_id: int, result: str) -> None:
+    row = get_subscription(sub_id)
+    interval = row["check_interval_minutes"] if row else None
+    with session() as conn:
+        conn.execute(
+            "UPDATE subscriptions SET last_check_at = ?, next_check_at = ?,"
+            " last_check_result = ? WHERE id = ?",
+            (utcnow(), _next_check(interval), result, sub_id),
+        )
+
+
+def _next_check(interval_minutes: int | None) -> str | None:
+    if interval_minutes is None:
+        return None
+    next_at = datetime.now(timezone.utc) + timedelta(minutes=interval_minutes)
+    return next_at.isoformat(timespec="seconds")
 
 
 # --- presets ---

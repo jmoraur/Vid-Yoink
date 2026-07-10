@@ -72,6 +72,10 @@ export function connectWebSocket(queryClient: QueryClient) {
           notify(event.job_id)
           queryClient.invalidateQueries({ queryKey: ['downloads'] })
           break
+        case 'subscription_checked':
+          queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+          queryClient.invalidateQueries({ queryKey: ['downloads'] })
+          break
       }
     }
     ws.onclose = () => setTimeout(open, 2000)

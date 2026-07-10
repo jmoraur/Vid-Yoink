@@ -113,6 +113,27 @@ export interface Preset {
   updated_at: string
 }
 
+export interface Subscription {
+  id: number
+  name: string
+  url: string
+  preset_id: number | null
+  enabled: boolean
+  check_interval_minutes: number | null
+  last_check_at: string | null
+  next_check_at: string | null
+  last_check_result: string | null
+  created_at: string
+}
+
+export interface SubscriptionIn {
+  name: string
+  url: string
+  preset_id: number | null
+  enabled: boolean
+  check_interval_minutes: number | null
+}
+
 export interface ArchiveEntry {
   id: number
   extractor: string
