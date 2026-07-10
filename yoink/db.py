@@ -158,3 +158,49 @@ def finish_job(
             " title = COALESCE(?, title), finished_at = ? WHERE id = ?",
             (status, json.dumps(files) if files else None, error, title, utcnow(), job_id),
         )
+
+
+# --- archive ---
+
+
+def archive_keys() -> set[str]:
+    """All known '{extractor} {video_id}' keys, yt-dlp's archive-id format."""
+    with session() as conn:
+        rows = conn.execute("SELECT extractor, video_id FROM archive").fetchall()
+    return {f"{r['extractor']} {r['video_id']}" for r in rows}
+
+
+# --- presets ---
+
+
+def list_presets() -> list[sqlite3.Row]:
+    with session() as conn:
+        return conn.execute("SELECT * FROM presets ORDER BY name").fetchall()
+
+
+def get_preset(preset_id: int) -> sqlite3.Row | None:
+    with session() as conn:
+        return conn.execute("SELECT * FROM presets WHERE id = ?", (preset_id,)).fetchone()
+
+
+def create_preset(name: str, options_json: str) -> int:
+    with session() as conn:
+        cur = conn.execute(
+            "INSERT INTO presets (name, options_json, updated_at) VALUES (?, ?, ?)",
+            (name, options_json, utcnow()),
+        )
+        return cur.lastrowid
+
+
+def update_preset(preset_id: int, name: str, options_json: str) -> bool:
+    with session() as conn:
+        cur = conn.execute(
+            "UPDATE presets SET name = ?, options_json = ?, updated_at = ? WHERE id = ?",
+            (name, options_json, utcnow(), preset_id),
+        )
+        return cur.rowcount > 0
+
+
+def delete_preset(preset_id: int) -> bool:
+    with session() as conn:
+        return conn.execute("DELETE FROM presets WHERE id = ?", (preset_id,)).rowcount > 0

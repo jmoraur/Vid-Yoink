@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Request
 from .. import db
 from ..jobs import JobManager
 from ..models import DownloadRequest, JobOut
+from ..ydl.opts import OptionsError, build_ydl_opts
 
 router = APIRouter()
 
@@ -17,6 +18,10 @@ def _job_out(row, manager: JobManager) -> JobOut:
 
 @router.post("/downloads", status_code=201)
 async def create_download(req: DownloadRequest, request: Request) -> JobOut:
+    try:
+        build_ydl_opts(req.options)  # reject bad options (e.g. invalid extra_args) up front
+    except OptionsError as exc:
+        raise HTTPException(422, str(exc))
     manager = _manager(request)
     job_id = db.create_job(req.url, req.options.model_dump_json())
     manager.enqueue(job_id)

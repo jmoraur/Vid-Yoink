@@ -1,7 +1,55 @@
 // TypeScript mirror of yoink/models.py — keep in sync by hand.
 
 export interface DownloadOptions {
-  output_dir?: string | null
+  mode: 'video' | 'audio'
+  audio_format: 'best' | 'mp3' | 'm4a' | 'opus' | 'flac' | 'wav'
+  max_height: number | null
+  container: 'auto' | 'mp4' | 'mkv' | 'webm'
+  output_dir: string | null
+  no_playlist: boolean
+  playlist_items: string | null
+  write_subtitles: boolean
+  write_auto_subs: boolean
+  subtitle_langs: string | null
+  embed_subtitles: boolean
+  embed_metadata: boolean
+  embed_thumbnail: boolean
+  write_thumbnail: boolean
+  sponsorblock_remove: string[]
+  sponsorblock_mark: string[]
+  proxy: string | null
+  rate_limit: string | null
+  retries: number | null
+  concurrent_fragments: number | null
+  cookies_from_browser: string | null
+  output_template: string | null
+  extra_args: string | null
+}
+
+export const DEFAULT_OPTIONS: DownloadOptions = {
+  mode: 'video',
+  audio_format: 'best',
+  max_height: null,
+  container: 'auto',
+  output_dir: null,
+  no_playlist: false,
+  playlist_items: null,
+  write_subtitles: false,
+  write_auto_subs: false,
+  subtitle_langs: null,
+  embed_subtitles: false,
+  embed_metadata: false,
+  embed_thumbnail: false,
+  write_thumbnail: false,
+  sponsorblock_remove: [],
+  sponsorblock_mark: [],
+  proxy: null,
+  rate_limit: null,
+  retries: null,
+  concurrent_fragments: null,
+  cookies_from_browser: null,
+  output_template: null,
+  extra_args: null,
 }
 
 export interface JobProgress {
@@ -34,4 +82,31 @@ export interface Job {
   started_at: string | null
   finished_at: string | null
   progress: JobProgress | null
+}
+
+export interface ProbeEntry {
+  id: string | null
+  title: string | null
+  duration: number | null
+  url: string | null
+  already_downloaded: boolean
+}
+
+export interface ProbeResult {
+  kind: 'video' | 'playlist'
+  title: string | null
+  webpage_url: string | null
+  thumbnail: string | null
+  duration: number | null
+  uploader: string | null
+  heights: number[]
+  count: number | null
+  entries: ProbeEntry[]
+}
+
+export interface Preset {
+  id: number
+  name: string
+  options: DownloadOptions
+  updated_at: string
 }

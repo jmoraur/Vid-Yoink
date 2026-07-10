@@ -30,6 +30,7 @@ def run_download_job(
     emit: Callable[[dict], None],
 ) -> JobResult:
     last_emit = 0.0
+    files: list[str] = []  # final paths, one per video, via the MoveFiles hook
 
     def progress_hook(d: dict) -> None:
         nonlocal last_emit
@@ -60,17 +61,21 @@ def run_download_job(
 
     def postprocessor_hook(d: dict) -> None:
         # No cancel check here: interrupting ffmpeg mid-run would leave broken files.
-        if d.get("status") != "started":
-            return
         info = d.get("info_dict") or {}
-        emit({
-            "type": "job_progress",
-            "job_id": job_id,
-            "status": "postprocessing",
-            "progress": None,
-            "postprocessor": d.get("postprocessor"),
-            "item_title": info.get("title"),
-        })
+        if d.get("status") == "finished" and d.get("postprocessor") == "MoveFiles":
+            # MoveFiles runs last for every video (also inside playlists, whose
+            # entries do NOT retain requested_downloads) with the final filepath.
+            if info.get("filepath"):
+                files.append(info["filepath"])
+        if d.get("status") == "started":
+            emit({
+                "type": "job_progress",
+                "job_id": job_id,
+                "status": "postprocessing",
+                "progress": None,
+                "postprocessor": d.get("postprocessor"),
+                "item_title": info.get("title"),
+            })
 
     opts = dict(ydl_opts)
     opts["progress_hooks"] = [progress_hook]
@@ -81,13 +86,17 @@ def run_download_job(
             info = ydl.extract_info(url, download=True)
         return JobResult(
             status="finished",
-            files=_collect_files(info),
+            files=_dedupe(files + _collect_files(info)),
             title=(info or {}).get("title"),
         )
     except DownloadCancelled:
         return JobResult(status="cancelled")
     except Exception as exc:  # extractor errors, network, ffmpeg...
         return JobResult(status="error", error=str(exc))
+
+
+def _dedupe(items: list[str]) -> list[str]:
+    return list(dict.fromkeys(items))
 
 
 def _collect_files(info: dict | None) -> list[str]:

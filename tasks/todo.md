@@ -10,7 +10,11 @@ Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
       (semaphore=2, cancel events, WS broadcaster), runner with default opts, minimal React
       page (URL box + job list + live progress), dev proxy.
       Verify: paste URL → progress ticks over WS → file lands in ~/Downloads; 2 concurrent jobs.
-- [ ] **M2 — Probe, options, presets**: /api/probe + ProbeCard/PlaylistEntryPicker, full
+- [x] **M2 — Probe, options, presets** *(done 2026-07-10: video probe with real heights,
+      flat playlist probe with already_downloaded flags, audio-only → .mp3 verified,
+      playlist_items "1,3" downloaded exactly items 1+3, invalid extra_args → 422,
+      presets CRUD + 409 on duplicate name, 20 unit tests green. Fixed: playlist entries
+      drop requested_downloads → final paths now collected via MoveFiles pp-hook.)*: /api/probe + ProbeCard/PlaylistEntryPicker, full
       DownloadOptions model, build_ydl_opts() + unit tests, basic + advanced form sections,
       presets CRUD.
       Verify: playlist probe shows entries; audio-only → .mp3; playlist_items works; pytest green.
