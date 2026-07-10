@@ -153,3 +153,10 @@ export interface VaultStatus {
   credentials?: string[]
   cookies?: string[]
 }
+
+export interface AppSettings {
+  default_output_dir: string
+  max_concurrent: number
+  ffmpeg_available: boolean
+  yt_dlp_version: string
+}

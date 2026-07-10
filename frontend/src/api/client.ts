@@ -1,4 +1,5 @@
 import type {
+  AppSettings,
   ArchiveEntry,
   DownloadOptions,
   Job,
@@ -96,6 +97,10 @@ export const api = {
     request<VaultStatus>(`/api/vault/cookies/${encodeURIComponent(label)}`, {
       method: 'DELETE',
     }),
+
+  getSettings: () => request<AppSettings>('/api/settings'),
+  putSettings: (settings: Partial<Pick<AppSettings, 'default_output_dir' | 'max_concurrent'>>) =>
+    request<AppSettings>('/api/settings', { method: 'PUT', body: JSON.stringify(settings) }),
 
   probe: (url: string) =>
     request<ProbeResult>('/api/probe', { method: 'POST', body: JSON.stringify({ url }) }),

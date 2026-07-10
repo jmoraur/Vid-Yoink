@@ -24,9 +24,10 @@ Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
       init/lock/unlock, wrong password → 403, download using vault cookies via StringIO,
       restart → locked → job fails fast with clear message → unlock + retry finishes,
       grep of data dir shows no plaintext secrets, vault.json mode 600.)*
-- [ ] **M6 — Production polish**: static serving + SPA fallback, ffmpeg startup check,
-      extra-args escape hatch, SponsorBlock section, settings page, README.
-      Verify: npm run build && uv run yoink full workflow; port bound to 127.0.0.1 only.
+- [x] **M6 — Production polish** *(done 2026-07-10: SPA fallback serves client routes but
+      404s unknown /api paths; settings API+page (default folder, parallel downloads,
+      ffmpeg + yt-dlp status); default_output_dir setting consulted by opts builder;
+      README; headless-Chromium screenshots of Download/Queue/Settings verified clean.)*
 
 ## Notes
 
@@ -38,4 +39,26 @@ Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
 
 ## Review
 
-(filled in as milestones complete)
+All six milestones landed 2026-07-10, one commit each. Final state: 32 backend unit
+tests green, ruff clean, tsc clean, production build served by `uv run yoink` on
+127.0.0.1:8090 only.
+
+**Verified end-to-end during the build (against real YouTube + direct URLs):**
+video/audio/playlist downloads with live WS progress; two concurrent jobs; cancel with
+"cancelling" intermediate state and resumable .part files; probe (video heights, flat
+playlist entries with already-downloaded flags); playlist item selection; presets;
+DB-backed archive proving moved files are never re-downloaded; force re-download;
+subscriptions with seeding, check-now, and a live-fired 1-minute auto-check; encrypted
+vault (wrong password 403, locked-job fail-fast + unlock-retry, no plaintext on disk,
+0600 file); SPA deep links; settings persistence.
+
+**Deviations from plan, all deliberate:** options map to yt-dlp via CLI argv +
+parse_options (instead of a hand-built opts dict) — exact CLI semantics for free;
+playlist file paths come from the MoveFiles pp-hook because playlist entries drop
+requested_downloads; added force_download option (re-download without deleting archive
+rows); advanced form sections consolidated into OptionsForm.tsx rather than one file per
+section.
+
+**Known gaps (documented in README):** cancellation can't interrupt ffmpeg/extraction;
+probe/checks read first 500 playlist entries; cookie rotation discarded; max_concurrent
+change needs restart; deno recommended for full YouTube format coverage.

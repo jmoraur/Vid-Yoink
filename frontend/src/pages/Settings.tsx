@@ -214,6 +214,66 @@ function ChangePassword() {
   )
 }
 
+function GeneralSettings() {
+  const queryClient = useQueryClient()
+  const settings = useQuery({ queryKey: ['settings'], queryFn: api.getSettings })
+  const [dir, setDir] = useState<string | null>(null)
+  const [conc, setConc] = useState<number | null>(null)
+  const save = useMutation({
+    mutationFn: () =>
+      api.putSettings({
+        ...(dir !== null ? { default_output_dir: dir } : {}),
+        ...(conc !== null ? { max_concurrent: conc } : {}),
+      }),
+    onSuccess: () => {
+      setDir(null)
+      setConc(null)
+      queryClient.invalidateQueries({ queryKey: ['settings'] })
+    },
+  })
+  if (!settings.data) return null
+  const dirty = dir !== null || conc !== null
+
+  return (
+    <div className="options-form" style={{ marginBottom: '1rem' }}>
+      <h2 style={{ marginTop: 0 }}>General</h2>
+      {!settings.data.ffmpeg_available && (
+        <p className="error">
+          ffmpeg was not found on this system — merging video+audio, audio extraction and
+          embedding will fail. Install it (on Fedora: RPM Fusion's ffmpeg).
+        </p>
+      )}
+      <div className="row">
+        <label className="grow">
+          Default download folder
+          <input
+            value={dir ?? settings.data.default_output_dir}
+            onChange={(e) => setDir(e.target.value)}
+          />
+        </label>
+        <label>
+          Parallel downloads
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={conc ?? settings.data.max_concurrent}
+            onChange={(e) => setConc(Number(e.target.value))}
+          />
+        </label>
+        <button disabled={!dirty || save.isPending} onClick={() => save.mutate()}>
+          Save
+        </button>
+      </div>
+      <p className="hint">
+        Parallel download changes apply after a restart. yt-dlp {settings.data.yt_dlp_version}
+        {' · '}ffmpeg {settings.data.ffmpeg_available ? 'found' : 'missing'}
+      </p>
+      {save.isError && <p className="error">{save.error.message}</p>}
+    </div>
+  )
+}
+
 export function Settings() {
   const vault = useQuery({ queryKey: ['vault'], queryFn: api.vaultStatus })
   const invalidate = useVaultInvalidate()
@@ -221,6 +281,7 @@ export function Settings() {
 
   return (
     <div>
+      <GeneralSettings />
       <div className="options-form">
         <div className="row" style={{ alignItems: 'center' }}>
           <h2 style={{ margin: 0 }} className="grow">

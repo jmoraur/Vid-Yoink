@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from . import archive, downloads, presets, probe, subscriptions, vault
+from . import archive, downloads, presets, probe, settings, subscriptions, vault
 
 router = APIRouter(prefix="/api")
 router.include_router(downloads.router)
@@ -9,3 +9,4 @@ router.include_router(presets.router)
 router.include_router(archive.router)
 router.include_router(subscriptions.router)
 router.include_router(vault.router)
+router.include_router(settings.router)

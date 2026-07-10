@@ -13,7 +13,7 @@ import shlex
 from yt_dlp import parse_options
 from yt_dlp.utils import YoutubeDLError
 
-from .. import config
+from .. import config, db
 from ..models import DownloadOptions
 from ..vault import ResolvedSecrets
 
@@ -35,7 +35,12 @@ def build_argv(options: DownloadOptions) -> list[str]:
         if options.container != "auto":
             argv += ["--merge-output-format", options.container]
 
-    argv += ["--paths", f"home:{options.output_dir or config.default_download_dir()}"]
+    output_dir = (
+        options.output_dir
+        or db.get_setting("default_output_dir")
+        or str(config.default_download_dir())
+    )
+    argv += ["--paths", f"home:{output_dir}"]
     if options.output_template:
         argv += ["--output", options.output_template]
 
