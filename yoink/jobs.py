@@ -23,11 +23,24 @@ class JobManager:
         self._vault = vault
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._cancel_events: dict[int, threading.Event] = {}
+        self._tasks: set[asyncio.Task] = set()
         self.live_progress: dict[int, dict] = {}
 
     def enqueue(self, job_id: int) -> None:
         self._cancel_events[job_id] = threading.Event()
-        asyncio.create_task(self._run(job_id))
+        task = asyncio.create_task(self._run(job_id))
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+
+    async def shutdown(self, timeout: float = 20.0) -> None:
+        """Cancel every queued/running download and wait for the workers to settle,
+        so process exit is not blocked by yt-dlp threads and all jobs reach a
+        terminal state in the DB. Jobs still stuck after the timeout (e.g. inside a
+        non-interruptible ffmpeg step) get marked interrupted on next startup."""
+        for event in self._cancel_events.values():
+            event.set()
+        if self._tasks:
+            await asyncio.wait(self._tasks, timeout=timeout)
 
     def cancel(self, job_id: int) -> bool:
         """Request cancellation. Takes effect at the next progress hook (or when the

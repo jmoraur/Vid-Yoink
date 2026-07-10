@@ -29,6 +29,16 @@ Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
       ffmpeg + yt-dlp status); default_output_dir setting consulted by opts builder;
       README; headless-Chromium screenshots of Download/Queue/Settings verified clean.)*
 
+## Post-v1 additions
+
+- [x] **Desktop launch like 001-Rsync-App** *(2026-07-10: scripts/yoink-app launcher +
+      packaging/yoink.desktop + icon + install_desktop.sh, installed. Launcher owns the
+      lifecycle: starts server if needed, opens Chromium app window, closing it TERMs the
+      server. Backend: JobManager.shutdown() cancels all workers on lifespan teardown,
+      uvicorn timeout_graceful_shutdown=5. Verified: window close → port free, no
+      processes, DB writable; TERM mid-download → all stopped in 1s, job 'cancelled',
+      .part kept; double-launch doesn't kill the first instance's server.)*
+
 ## Notes
 
 - yt-dlp warns about a missing JavaScript runtime for YouTube ("some formats may be

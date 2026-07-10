@@ -32,11 +32,28 @@ an encrypted vault. Runs entirely on your machine, bound to `127.0.0.1`.
 - Optional: **deno** — yt-dlp uses it as a JavaScript runtime for YouTube; without one,
   some YouTube formats may be missing (yt-dlp prints a warning).
 
-## Run
+## Run as a desktop app (recommended)
 
 ```sh
 npm install --prefix frontend && npm run build --prefix frontend  # once, and after UI changes
-uv run yoink                          # serves http://127.0.0.1:8090
+scripts/install_desktop.sh                                        # once
+```
+
+Then launch **Yoink** from the application menu / KRunner. The launcher starts the
+server, opens a dedicated app window (Chromium app mode), and when you close that
+window it shuts the server down cleanly: running downloads are cancelled within
+seconds (partial files kept, resumable via Retry), every job gets a terminal state in
+the database, the port is released, and nothing keeps running in the background.
+Launching a second time while a window is open just adds a window to the same instance.
+
+Environment overrides: `YOINK_PORT`, `YOINK_DATA_DIR`, `YOINK_BROWSER` (e.g.
+`"firefox --new-window"` — but auto-shutdown-on-close only works with the default
+Chromium app mode). Server log: `~/.local/state/yoink/server.log`.
+
+## Run manually
+
+```sh
+uv run yoink                          # serves http://127.0.0.1:8090, Ctrl+C to stop
 uv run yoink --port 9000 --data-dir ~/somewhere  # optional flags
 ```
 

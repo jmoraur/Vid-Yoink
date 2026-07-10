@@ -52,6 +52,7 @@ async def lifespan(app: FastAPI):
     scheduler_task.cancel()
     with suppress(asyncio.CancelledError):
         await scheduler_task
+    await app.state.jobs.shutdown()
 
 
 def create_app() -> FastAPI:
