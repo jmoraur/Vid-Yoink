@@ -1,3 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
+import { api } from '../../api/client'
 import type { DownloadOptions } from '../../api/types'
 import { Section } from './Section'
 
@@ -251,20 +254,7 @@ export function OptionsForm({ value, onChange, heights }: Props) {
       </Section>
 
       <Section title="Cookies & authentication">
-        <div className="row">
-          <label className="grow">
-            Cookies from browser
-            <input
-              value={str(value.cookies_from_browser)}
-              onChange={(e) => set('cookies_from_browser', orNull(e.target.value))}
-              placeholder="firefox  ·  chrome:ProfileName"
-            />
-          </label>
-        </div>
-        <p className="hint">
-          Reads the site login cookies straight from your browser profile. Stored vault
-          credentials arrive in a later milestone.
-        </p>
+        <AuthSection value={value} set={set} />
       </Section>
 
       <Section title="Output template">
@@ -293,5 +283,72 @@ export function OptionsForm({ value, onChange, heights }: Props) {
         </div>
       </Section>
     </div>
+  )
+}
+
+function AuthSection({
+  value,
+  set,
+}: {
+  value: DownloadOptions
+  set: <K extends keyof DownloadOptions>(key: K, v: DownloadOptions[K]) => void
+}) {
+  const vault = useQuery({ queryKey: ['vault'], queryFn: api.vaultStatus })
+  const unlocked = vault.data?.state === 'unlocked'
+
+  return (
+    <>
+      <div className="row">
+        <label>
+          Vault login
+          <select
+            value={value.credential_label ?? ''}
+            onChange={(e) => set('credential_label', e.target.value || null)}
+            disabled={!unlocked && !value.credential_label}
+          >
+            <option value="">None</option>
+            {vault.data?.credentials?.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Vault cookies
+          <select
+            value={value.cookies_label ?? ''}
+            onChange={(e) => set('cookies_label', e.target.value || null)}
+            disabled={!unlocked && !value.cookies_label}
+          >
+            <option value="">None</option>
+            {vault.data?.cookies?.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grow">
+          Cookies from browser
+          <input
+            value={value.cookies_from_browser ?? ''}
+            onChange={(e) =>
+              set('cookies_from_browser', e.target.value.trim() === '' ? null : e.target.value)
+            }
+            placeholder="firefox  ·  chrome:ProfileName"
+          />
+        </label>
+      </div>
+      <p className="hint">
+        {vault.data?.state === 'unlocked' && 'Manage stored logins and cookies in '}
+        {vault.data?.state === 'locked' &&
+          'Vault is locked — jobs using vault entries will fail until you unlock it in '}
+        {vault.data?.state === 'uninitialized' &&
+          'No vault yet — create one to store site logins in '}
+        <Link to="/settings">Settings</Link>. "Cookies from browser" reads your browser
+        profile directly and needs no vault.
+      </p>
+    </>
   )
 }

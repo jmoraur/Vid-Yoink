@@ -6,6 +6,7 @@ parsing identical to the real CLI — and makes the raw extra_args escape hatch
 literally "appended last, overrides everything". Pure function, unit-tested.
 Hooks, archive, and logger are attached by the runner, not here."""
 
+import io
 import optparse
 import shlex
 
@@ -14,6 +15,7 @@ from yt_dlp.utils import YoutubeDLError
 
 from .. import config
 from ..models import DownloadOptions
+from ..vault import ResolvedSecrets
 
 
 class OptionsError(ValueError):
@@ -80,11 +82,19 @@ def build_argv(options: DownloadOptions) -> list[str]:
     return argv
 
 
-def build_ydl_opts(options: DownloadOptions) -> dict:
+def build_ydl_opts(options: DownloadOptions, secrets: ResolvedSecrets | None = None) -> dict:
     try:
         opts = dict(parse_options(build_argv(options)).ydl_opts)
     except (optparse.OptParseError, YoutubeDLError, ValueError) as exc:
         raise OptionsError(str(exc)) from exc
     opts["quiet"] = True
     opts["noprogress"] = True
+    if secrets:
+        # Applied directly (not via argv): cookies go in as an in-memory stream —
+        # cookiefile accepts a text stream, so no secret ever touches disk.
+        if secrets.username is not None:
+            opts["username"] = secrets.username
+            opts["password"] = secrets.password
+        if secrets.cookies_content is not None:
+            opts["cookiefile"] = io.StringIO(secrets.cookies_content)
     return opts

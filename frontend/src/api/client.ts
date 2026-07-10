@@ -6,6 +6,7 @@ import type {
   ProbeResult,
   Subscription,
   SubscriptionIn,
+  VaultStatus,
 } from './types'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -62,6 +63,39 @@ export const api = {
     }),
   seedSubscription: (id: number) =>
     request<{ seeded: number }>(`/api/subscriptions/${id}/seed`, { method: 'POST' }),
+
+  vaultStatus: () => request<VaultStatus>('/api/vault/status'),
+  vaultInit: (password: string) =>
+    request<VaultStatus>('/api/vault/init', { method: 'POST', body: JSON.stringify({ password }) }),
+  vaultUnlock: (password: string) =>
+    request<VaultStatus>('/api/vault/unlock', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    }),
+  vaultLock: () => request<VaultStatus>('/api/vault/lock', { method: 'POST' }),
+  vaultChangePassword: (oldPassword: string, newPassword: string) =>
+    request<VaultStatus>('/api/vault/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+    }),
+  vaultSetCredential: (label: string, username: string, password: string) =>
+    request<VaultStatus>(`/api/vault/credentials/${encodeURIComponent(label)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ username, password }),
+    }),
+  vaultDeleteCredential: (label: string) =>
+    request<VaultStatus>(`/api/vault/credentials/${encodeURIComponent(label)}`, {
+      method: 'DELETE',
+    }),
+  vaultSetCookies: (label: string, content: string) =>
+    request<VaultStatus>(`/api/vault/cookies/${encodeURIComponent(label)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ content }),
+    }),
+  vaultDeleteCookies: (label: string) =>
+    request<VaultStatus>(`/api/vault/cookies/${encodeURIComponent(label)}`, {
+      method: 'DELETE',
+    }),
 
   probe: (url: string) =>
     request<ProbeResult>('/api/probe', { method: 'POST', body: JSON.stringify({ url }) }),

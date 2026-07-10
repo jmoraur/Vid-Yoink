@@ -21,6 +21,8 @@ export interface DownloadOptions {
   rate_limit: string | null
   retries: number | null
   concurrent_fragments: number | null
+  credential_label: string | null
+  cookies_label: string | null
   cookies_from_browser: string | null
   output_template: string | null
   extra_args: string | null
@@ -48,6 +50,8 @@ export const DEFAULT_OPTIONS: DownloadOptions = {
   rate_limit: null,
   retries: null,
   concurrent_fragments: null,
+  credential_label: null,
+  cookies_label: null,
   cookies_from_browser: null,
   output_template: null,
   extra_args: null,
@@ -142,4 +146,10 @@ export interface ArchiveEntry {
   subscription_id: number | null
   job_id: number | null
   created_at: string
+}
+
+export interface VaultStatus {
+  state: 'uninitialized' | 'locked' | 'unlocked'
+  credentials?: string[]
+  cookies?: string[]
 }

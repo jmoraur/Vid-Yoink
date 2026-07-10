@@ -6,6 +6,7 @@ import threading
 
 from . import db
 from .models import DownloadOptions
+from .vault import Vault, VaultError, resolve_secrets
 from .ws import Broadcaster
 from .ydl.opts import build_ydl_opts
 from .ydl.runner import JobResult, run_download_job
@@ -14,9 +15,12 @@ TERMINAL_STATUSES = {"finished", "error", "cancelled"}
 
 
 class JobManager:
-    def __init__(self, broadcaster: Broadcaster, max_concurrent: int = 2) -> None:
+    def __init__(
+        self, broadcaster: Broadcaster, vault: Vault, max_concurrent: int = 2
+    ) -> None:
         self._loop = asyncio.get_running_loop()
         self._broadcaster = broadcaster
+        self._vault = vault
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._cancel_events: dict[int, threading.Event] = {}
         self.live_progress: dict[int, dict] = {}
@@ -47,6 +51,14 @@ class JobManager:
                 if row is None:
                     return
                 options = DownloadOptions.model_validate_json(row["options_json"])
+                try:
+                    # Fails fast with a clear message when the vault is locked or a
+                    # referenced label is missing; Retry after unlocking re-runs it.
+                    secrets = resolve_secrets(options, self._vault)
+                except VaultError as exc:
+                    db.finish_job(job_id, "error", error=str(exc))
+                    self._publish_status(job_id, "error")
+                    return
                 db.mark_job_running(job_id)
                 self._publish_status(job_id, "running")
                 try:
@@ -54,7 +66,7 @@ class JobManager:
                         run_download_job,
                         job_id,
                         row["url"],
-                        build_ydl_opts(options),
+                        build_ydl_opts(options, secrets),
                         cancel_event,
                         self._emit_threadsafe,
                         row["subscription_id"],

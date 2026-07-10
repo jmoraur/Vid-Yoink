@@ -36,6 +36,8 @@ class DownloadOptions(BaseModel):
     retries: int | None = None
     concurrent_fragments: int | None = None
     # auth (vault labels resolved at run time; cookies_from_browser passed through)
+    credential_label: str | None = None  # vault username/password entry
+    cookies_label: str | None = None  # vault cookies.txt entry
     cookies_from_browser: str | None = None  # yt-dlp syntax: BROWSER[+KEYRING][:PROFILE]
     # output template (advanced)
     output_template: str | None = None

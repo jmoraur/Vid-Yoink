@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from . import api, config, db, ws
 from .jobs import JobManager
 from .scheduler import scheduler_loop
+from .vault import Vault
 from .ws import Broadcaster
 
 FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
@@ -17,7 +18,8 @@ FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 async def lifespan(app: FastAPI):
     db.init(config.db_path())
     app.state.broadcaster = Broadcaster()
-    app.state.jobs = JobManager(app.state.broadcaster, max_concurrent=2)
+    app.state.vault = Vault(config.vault_path())
+    app.state.jobs = JobManager(app.state.broadcaster, app.state.vault, max_concurrent=2)
     scheduler_task = asyncio.create_task(
         scheduler_loop(app.state.jobs, app.state.broadcaster)
     )
