@@ -1,0 +1,157 @@
+:root {
+  color-scheme: dark;
+  --bg: #16181d;
+  --surface: #1e2128;
+  --border: #2c3038;
+  --text: #e4e6ea;
+  --muted: #8b909a;
+  --accent: #4f9cf9;
+  --green: #4caf7d;
+  --red: #e05d5d;
+  --yellow: #d9a441;
+  font-family: system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+header h1 {
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+}
+
+.download-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.download-form input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.download-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+button {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.small {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  background: var(--border);
+}
+
+.jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.job {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+}
+
+.job-main {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.job-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.job-status {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-queued { color: var(--muted); }
+.status-running { color: var(--accent); }
+.status-finished { color: var(--green); }
+.status-error { color: var(--red); }
+.status-cancelled { color: var(--yellow); }
+
+.job-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.6rem;
+}
+
+.bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.25s linear;
+}
+
+.stats {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.error {
+  color: var(--red);
+  font-size: 0.85rem;
+  margin: 0.4rem 0 0;
+  white-space: pre-wrap;
+}
+
+.files,
+.muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.4rem 0 0;
+}
