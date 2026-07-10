@@ -170,6 +170,51 @@ def archive_keys() -> set[str]:
     return {f"{r['extractor']} {r['video_id']}" for r in rows}
 
 
+def add_archive_entry(
+    extractor: str,
+    video_id: str,
+    title: str | None = None,
+    job_id: int | None = None,
+    subscription_id: int | None = None,
+) -> None:
+    with session() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO archive"
+            " (extractor, video_id, title, job_id, subscription_id, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (extractor, video_id, title, job_id, subscription_id, utcnow()),
+        )
+
+
+def list_archive(
+    subscription_id: int | None = None, q: str | None = None, limit: int = 500
+) -> list[sqlite3.Row]:
+    query = "SELECT * FROM archive"
+    conditions, params = [], []
+    if subscription_id is not None:
+        conditions.append("subscription_id = ?")
+        params.append(subscription_id)
+    if q:
+        conditions.append("(title LIKE ? OR video_id LIKE ?)")
+        params += [f"%{q}%", f"%{q}%"]
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    query += " ORDER BY id DESC LIMIT ?"
+    params.append(limit)
+    with session() as conn:
+        return conn.execute(query, params).fetchall()
+
+
+def delete_archive_entry(archive_id: int) -> bool:
+    with session() as conn:
+        return conn.execute("DELETE FROM archive WHERE id = ?", (archive_id,)).rowcount > 0
+
+
+def delete_job(job_id: int) -> bool:
+    with session() as conn:
+        return conn.execute("DELETE FROM jobs WHERE id = ?", (job_id,)).rowcount > 0
+
+
 # --- presets ---
 
 

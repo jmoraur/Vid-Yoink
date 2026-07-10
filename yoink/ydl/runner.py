@@ -11,7 +11,42 @@ from typing import Callable
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadCancelled
 
+from .. import db
+
 PROGRESS_INTERVAL = 0.25  # seconds between job_progress events per job
+
+
+class SqliteArchive(set):
+    """Accepted by YoutubeDL's documented `download_archive` param (a set, or a
+    filename). yt-dlp checks membership to skip already-downloaded videos and calls
+    add() to record new ones — which we mirror into the archive table, so the
+    'already downloaded' state lives in the DB and survives files being moved away.
+
+    With force_download the preload is empty: nothing gets skipped, but new
+    downloads are still recorded (INSERT OR IGNORE absorbs duplicates)."""
+
+    def __init__(
+        self,
+        job_id: int,
+        subscription_id: int | None,
+        preload: set[str],
+        title_map: dict[str, str | None],
+    ) -> None:
+        super().__init__(preload)
+        self._job_id = job_id
+        self._subscription_id = subscription_id
+        self._title_map = title_map
+
+    def add(self, archive_id: str) -> None:
+        extractor, _, video_id = str(archive_id).partition(" ")
+        db.add_archive_entry(
+            extractor,
+            video_id,
+            title=self._title_map.get(archive_id),
+            job_id=self._job_id,
+            subscription_id=self._subscription_id,
+        )
+        super().add(archive_id)
 
 
 @dataclass
@@ -28,19 +63,27 @@ def run_download_job(
     ydl_opts: dict,
     cancel_event: Event,
     emit: Callable[[dict], None],
+    subscription_id: int | None = None,
+    force_download: bool = False,
 ) -> JobResult:
     last_emit = 0.0
     files: list[str] = []  # final paths, one per video, via the MoveFiles hook
+    title_map: dict[str, str | None] = {}  # archive_id -> title, filled by hooks
+
+    def remember_title(info: dict) -> None:
+        if info.get("id") and info.get("extractor_key"):
+            title_map[f"{info['extractor_key'].lower()} {info['id']}"] = info.get("title")
 
     def progress_hook(d: dict) -> None:
         nonlocal last_emit
         if cancel_event.is_set():
             raise DownloadCancelled("cancelled by user")
+        info = d.get("info_dict") or {}
+        remember_title(info)
         now = time.monotonic()
         if d.get("status") == "downloading" and now - last_emit < PROGRESS_INTERVAL:
             return
         last_emit = now
-        info = d.get("info_dict") or {}
         total = d.get("total_bytes") or d.get("total_bytes_estimate")
         downloaded = d.get("downloaded_bytes")
         filename = d.get("filename")
@@ -80,6 +123,12 @@ def run_download_job(
     opts = dict(ydl_opts)
     opts["progress_hooks"] = [progress_hook]
     opts["postprocessor_hooks"] = [postprocessor_hook]
+    opts["download_archive"] = SqliteArchive(
+        job_id,
+        subscription_id,
+        preload=set() if force_download else db.archive_keys(),
+        title_map=title_map,
+    )
 
     try:
         with YoutubeDL(opts) as ydl:

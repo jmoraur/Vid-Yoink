@@ -57,6 +57,8 @@ class JobManager:
                         build_ydl_opts(options),
                         cancel_event,
                         self._emit_threadsafe,
+                        row["subscription_id"],
+                        options.force_download,
                     )
                 except Exception as exc:  # runner handles expected errors; this is a backstop
                     result = JobResult(status="error", error=f"internal error: {exc!r}")

@@ -24,6 +24,7 @@ export interface DownloadOptions {
   cookies_from_browser: string | null
   output_template: string | null
   extra_args: string | null
+  force_download: boolean
 }
 
 export const DEFAULT_OPTIONS: DownloadOptions = {
@@ -50,6 +51,7 @@ export const DEFAULT_OPTIONS: DownloadOptions = {
   cookies_from_browser: null,
   output_template: null,
   extra_args: null,
+  force_download: false,
 }
 
 export interface JobProgress {
@@ -109,4 +111,14 @@ export interface Preset {
   name: string
   options: DownloadOptions
   updated_at: string
+}
+
+export interface ArchiveEntry {
+  id: number
+  extractor: string
+  video_id: string
+  title: string | null
+  subscription_id: number | null
+  job_id: number | null
+  created_at: string
 }

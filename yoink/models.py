@@ -41,6 +41,8 @@ class DownloadOptions(BaseModel):
     output_template: str | None = None
     # escape hatch: raw yt-dlp CLI arguments, parsed last so they override everything
     extra_args: str | None = None
+    # skip the already-downloaded check (new downloads are still recorded)
+    force_download: bool = False
 
 
 class DownloadRequest(BaseModel):
@@ -100,6 +102,20 @@ class ProbeResult(BaseModel):
     heights: list[int] = []  # video: available resolutions for the quality select
     count: int | None = None  # playlist: total entries (may exceed len(entries))
     entries: list[ProbeEntry] = []
+
+
+class ArchiveEntryOut(BaseModel):
+    id: int
+    extractor: str
+    video_id: str
+    title: str | None = None
+    subscription_id: int | None = None
+    job_id: int | None = None
+    created_at: str
+
+    @classmethod
+    def from_row(cls, row: sqlite3.Row) -> "ArchiveEntryOut":
+        return cls(**{k: row[k] for k in cls.model_fields})
 
 
 class PresetIn(BaseModel):

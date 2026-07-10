@@ -138,6 +138,14 @@ export function OptionsForm({ value, onChange, heights }: Props) {
           />
           Subtitles
         </label>
+        <label title="Skip the already-downloaded check for this download">
+          <input
+            type="checkbox"
+            checked={value.force_download}
+            onChange={(e) => set('force_download', e.target.checked)}
+          />
+          Re-download if in archive
+        </label>
       </div>
 
       <Section title="Subtitles">

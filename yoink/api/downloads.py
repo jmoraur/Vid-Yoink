@@ -49,3 +49,27 @@ async def cancel_download(job_id: int, request: Request) -> dict:
     if not _manager(request).cancel(job_id):
         raise HTTPException(409, "job is not queued or running")
     return {"ok": True}
+
+
+@router.post("/downloads/{job_id}/retry", status_code=201)
+async def retry_download(job_id: int, request: Request) -> JobOut:
+    row = db.get_job(job_id)
+    if row is None:
+        raise HTTPException(404, "no such job")
+    if row["status"] not in ("finished", "error", "cancelled"):
+        raise HTTPException(409, "job is still queued or running")
+    manager = _manager(request)
+    new_id = db.create_job(row["url"], row["options_json"], row["subscription_id"])
+    manager.enqueue(new_id)
+    return _job_out(db.get_job(new_id), manager)
+
+
+@router.delete("/downloads/{job_id}")
+async def delete_download(job_id: int) -> dict:
+    row = db.get_job(job_id)
+    if row is None:
+        raise HTTPException(404, "no such job")
+    if row["status"] not in ("finished", "error", "cancelled"):
+        raise HTTPException(409, "cancel the job before deleting it")
+    db.delete_job(job_id)
+    return {"ok": True}

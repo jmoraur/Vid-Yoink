@@ -412,6 +412,15 @@ nav a.active {
   margin-bottom: 1rem;
 }
 
+.page-actions .search {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
 .preset-editor {
   background: var(--surface);
   border: 1px solid var(--border);

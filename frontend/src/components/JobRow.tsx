@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Job } from '../api/types'
 import { api } from '../api/client'
 import { useCancelling, useJobProgress } from '../ws'
@@ -23,7 +23,17 @@ function formatEta(s: number | null | undefined): string {
 export function JobRow({ job }: { job: Job }) {
   const live = useJobProgress(job.id)
   const cancelling = useCancelling(job.id)
+  const queryClient = useQueryClient()
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['downloads'] })
   const cancel = useMutation({ mutationFn: () => api.cancelDownload(job.id) })
+  const retry = useMutation({
+    mutationFn: () => api.retryDownload(job.id),
+    onSuccess: invalidate,
+  })
+  const remove = useMutation({
+    mutationFn: () => api.deleteDownload(job.id),
+    onSuccess: invalidate,
+  })
 
   const progress = live ?? job.progress ?? undefined
   const active = job.status === 'queued' || job.status === 'running'
@@ -50,6 +60,16 @@ export function JobRow({ job }: { job: Job }) {
         {active && !cancelling && (
           <button className="small" onClick={() => cancel.mutate()}>
             Cancel
+          </button>
+        )}
+        {(job.status === 'error' || job.status === 'cancelled') && (
+          <button className="small" onClick={() => retry.mutate()}>
+            Retry
+          </button>
+        )}
+        {!active && (
+          <button className="small" onClick={() => remove.mutate()}>
+            Delete
           </button>
         )}
       </div>

@@ -18,7 +18,10 @@ Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
       DownloadOptions model, build_ydl_opts() + unit tests, basic + advanced form sections,
       presets CRUD.
       Verify: playlist probe shows entries; audio-only → .mp3; playlist_items works; pytest green.
-- [ ] **M3 — Queue management + archive**: cancel/retry/delete, SqliteArchive as
+- [x] **M3 — Queue management + archive** *(done 2026-07-10: DB archive wired via
+      SqliteArchive set-subclass; verified file moved to library → re-submit skipped with
+      zero downloads; force_download bypasses check; delete archive row → re-downloads;
+      retry/delete endpoints with 409 guard; archive browser page with search.)*: cancel/retry/delete, SqliteArchive as
       download_archive, archive browser, history filters.
       Verify: cancel mid-download; re-submit same URL after moving file → skipped; delete
       archive row → re-downloads.

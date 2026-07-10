@@ -1,4 +1,4 @@
-import type { DownloadOptions, Job, Preset, ProbeResult } from './types'
+import type { ArchiveEntry, DownloadOptions, Job, Preset, ProbeResult } from './types'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -23,6 +23,15 @@ export const api = {
     request<Job>('/api/downloads', { method: 'POST', body: JSON.stringify({ url, options }) }),
   cancelDownload: (id: number) =>
     request<{ ok: boolean }>(`/api/downloads/${id}/cancel`, { method: 'POST' }),
+  retryDownload: (id: number) =>
+    request<Job>(`/api/downloads/${id}/retry`, { method: 'POST' }),
+  deleteDownload: (id: number) =>
+    request<{ ok: boolean }>(`/api/downloads/${id}`, { method: 'DELETE' }),
+
+  listArchive: (q?: string) =>
+    request<ArchiveEntry[]>(`/api/archive${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  deleteArchiveEntry: (id: number) =>
+    request<{ ok: boolean }>(`/api/archive/${id}`, { method: 'DELETE' }),
 
   probe: (url: string) =>
     request<ProbeResult>('/api/probe', { method: 'POST', body: JSON.stringify({ url }) }),
