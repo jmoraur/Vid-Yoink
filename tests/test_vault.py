@@ -1,10 +1,12 @@
+import base64
 import json
 import os
 
 import pytest
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from yoink.models import DownloadOptions
-from yoink.vault import Vault, VaultError, VaultLocked, WrongPassword, resolve_secrets
+from yoink.vault import AAD, Vault, VaultError, VaultLocked, WrongPassword, _derive, resolve_secrets
 from yoink.ydl.opts import build_ydl_opts
 
 
@@ -59,6 +61,24 @@ def test_change_password(vault):
         vault.unlock("old")
     vault.unlock("new")
     assert vault.credential("a") == ("u", "p")
+
+
+def test_unlock_uses_stored_kdf_params(vault, tmp_path):
+    # A vault written with different scrypt params (e.g. before a cost tuning)
+    # must still unlock: the params stored in the file are authoritative.
+    salt, nonce = os.urandom(16), os.urandom(12)
+    key = _derive("pw", salt, n=2**14, r=8, p=1)
+    payload = json.dumps({"credentials": {}, "cookies": {"c": "v"}}).encode()
+    doc = {
+        "version": 1,
+        "kdf": {"name": "scrypt", "n": 2**14, "r": 8, "p": 1},
+        "salt": base64.b64encode(salt).decode(),
+        "nonce": base64.b64encode(nonce).decode(),
+        "ct": base64.b64encode(AESGCM(key).encrypt(nonce, payload, AAD)).decode(),
+    }
+    (tmp_path / "vault.json").write_text(json.dumps(doc))
+    vault.unlock("pw")
+    assert vault.cookies("c") == "v"
 
 
 def test_no_plaintext_on_disk_and_0600(vault, tmp_path):

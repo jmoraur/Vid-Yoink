@@ -13,13 +13,20 @@ from .ydl.probe import probe_url
 log = logging.getLogger(__name__)
 
 _in_flight: set[int] = set()
+# Strong refs so pending checks can't be garbage-collected mid-flight (the event
+# loop only holds weak refs to tasks); same pattern as JobManager._tasks.
+_check_tasks: set[asyncio.Task] = set()
 
 
 async def scheduler_loop(manager: JobManager, broadcaster: Broadcaster) -> None:
     while True:
         try:
             for row in db.due_subscriptions():
-                asyncio.create_task(check_subscription(row["id"], manager, broadcaster))
+                task = asyncio.create_task(
+                    check_subscription(row["id"], manager, broadcaster)
+                )
+                _check_tasks.add(task)
+                task.add_done_callback(_check_tasks.discard)
         except Exception:
             log.exception("scheduler tick failed")
         await asyncio.sleep(60)

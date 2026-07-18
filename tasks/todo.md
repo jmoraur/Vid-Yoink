@@ -39,6 +39,18 @@ Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
       processes, DB writable; TERM mid-download → all stopped in 1s, job 'cancelled',
       .part kept; double-launch doesn't kill the first instance's server.)*
 
+- [x] **Deep review pass** *(2026-07-19: full backend read. Fixed three latent
+      issues: vault unlock now derives with the scrypt params stored in the file
+      instead of module constants (tuning the KDF cost would have locked out every
+      existing vault as "wrong password"; regression test added); scheduler holds
+      strong refs to check tasks so pending subscription checks can't be
+      garbage-collected mid-flight; vault writes fsync before the atomic rename.
+      Wrote [vault-format.md](vault-format.md) so the file format is readable
+      without the Python source. Accepted as-is, deliberately: change-password on
+      a locked vault leaves it unlocked (password was just proven); two concurrent
+      jobs for the same video can both download it (per-job archive snapshot; DB
+      dedupes, only bandwidth wasted).)*
+
 ## Deferred / future reference
 
 - **Public cross-platform distribution** — analyzed 2026-07-10, deliberately deferred;

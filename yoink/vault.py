@@ -33,8 +33,10 @@ class WrongPassword(VaultError):
         super().__init__("Wrong master password")
 
 
-def _derive(password: str, salt: bytes) -> bytes:
-    kdf = Scrypt(salt=salt, length=32, n=SCRYPT_N, r=SCRYPT_R, p=SCRYPT_P)
+def _derive(
+    password: str, salt: bytes, n: int = SCRYPT_N, r: int = SCRYPT_R, p: int = SCRYPT_P
+) -> bytes:
+    kdf = Scrypt(salt=salt, length=32, n=n, r=r, p=p)
     return kdf.derive(password.encode())
 
 
@@ -70,7 +72,11 @@ class Vault:
             raise VaultError("Vault is not initialized")
         doc = json.loads(self._path.read_text())
         salt = base64.b64decode(doc["salt"])
-        key = _derive(password, salt)
+        # Derive with the params stored in the file, not the current module
+        # constants — otherwise tuning the scrypt cost would lock out every
+        # existing vault with a bogus "wrong password".
+        kdf = doc["kdf"]
+        key = _derive(password, salt, n=kdf["n"], r=kdf["r"], p=kdf["p"])
         try:
             plaintext = AESGCM(key).decrypt(
                 base64.b64decode(doc["nonce"]), base64.b64decode(doc["ct"]), AAD
@@ -160,6 +166,10 @@ class Vault:
         try:
             with os.fdopen(fd, "w") as f:
                 f.write(json.dumps(doc))
+                f.flush()
+                # fsync before the rename: os.replace is atomic but not durable,
+                # and a torn vault file is unrecoverable by design.
+                os.fsync(f.fileno())
         except BaseException:
             tmp.unlink(missing_ok=True)
             raise
