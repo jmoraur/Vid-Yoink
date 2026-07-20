@@ -3,6 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Subscription, SubscriptionIn } from '../api/types'
+import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
+import { Icon } from '../components/ui/Icon'
+import { Skeleton } from '../components/ui/Skeleton'
 
 const EMPTY: SubscriptionIn = {
   name: '',
@@ -149,7 +153,7 @@ function SubscriptionRow({ sub }: { sub: Subscription }) {
         <button className="small" onClick={() => setEditing(true)}>
           Edit
         </button>
-        <button className="small" onClick={() => remove.mutate()}>
+        <button className="danger-ghost" onClick={() => remove.mutate()}>
           Delete
         </button>
       </div>
@@ -176,18 +180,25 @@ export function Subscriptions() {
         <SubscriptionEditor sub={null} onDone={() => setAdding(false)} />
       ) : (
         <div className="page-actions">
-          <button onClick={() => setAdding(true)}>Add subscription</button>
+          <button onClick={() => setAdding(true)}>
+            <Icon name="plus" /> Add subscription
+          </button>
         </div>
       )}
-      <section className="jobs">
-        {subs.data?.map((sub) => <SubscriptionRow key={sub.id} sub={sub} />)}
-        {subs.data?.length === 0 && !adding && (
-          <p className="muted">
-            No subscriptions yet. Add a playlist or channel to keep it in sync — only new
-            items get downloaded.
-          </p>
-        )}
-      </section>
+      {subs.isPending && <Skeleton lines={2} />}
+      {subs.isError && <ErrorState message={subs.error.message} onRetry={() => subs.refetch()} />}
+      {subs.data && (
+        <section className="jobs">
+          {subs.data.map((sub) => <SubscriptionRow key={sub.id} sub={sub} />)}
+          {subs.data.length === 0 && !adding && (
+            <EmptyState
+              icon="rss"
+              title="No subscriptions yet"
+              hint="Add a playlist or channel to keep it in sync — only new items get downloaded."
+            />
+          )}
+        </section>
+      )}
     </div>
   )
 }

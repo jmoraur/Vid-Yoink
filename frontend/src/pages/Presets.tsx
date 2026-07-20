@@ -3,6 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { DEFAULT_OPTIONS, type DownloadOptions, type Preset } from '../api/types'
 import { OptionsForm } from '../components/options/OptionsForm'
+import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
+import { Icon } from '../components/ui/Icon'
+import { Skeleton } from '../components/ui/Skeleton'
 
 function summarize(o: DownloadOptions): string {
   const parts = [o.mode === 'audio' ? `audio (${o.audio_format})` : 'video']
@@ -74,27 +78,41 @@ export function Presets() {
   return (
     <div>
       <div className="page-actions">
-        <button onClick={() => setEditing('new')}>New preset</button>
+        <button onClick={() => setEditing('new')}>
+          <Icon name="plus" /> New preset
+        </button>
       </div>
-      <section className="jobs">
-        {presets.data?.map((p) => (
-          <div className="job" key={p.id}>
-            <div className="job-main">
-              <span className="job-title">{p.name}</span>
-              <button className="small" onClick={() => setEditing(p)}>
-                Edit
-              </button>
-              <button className="small" onClick={() => remove.mutate(p.id)}>
-                Delete
-              </button>
+      {presets.isPending && <Skeleton lines={2} />}
+      {presets.isError && (
+        <ErrorState message={presets.error.message} onRetry={() => presets.refetch()} />
+      )}
+      {presets.data && (
+        <section className="jobs">
+          {presets.data.map((p) => (
+            <div className="job" key={p.id}>
+              <div className="job-main">
+                <span className="job-title">{p.name}</span>
+                <span className="job-actions">
+                  <button className="small" onClick={() => setEditing(p)}>
+                    Edit
+                  </button>
+                  <button className="danger-ghost" onClick={() => remove.mutate(p.id)}>
+                    Delete
+                  </button>
+                </span>
+              </div>
+              <p className="muted">{summarize(p.options)}</p>
             </div>
-            <p className="muted">{summarize(p.options)}</p>
-          </div>
-        ))}
-        {presets.data?.length === 0 && (
-          <p className="muted">No presets yet. Configure options on the Download page and save them, or create one here.</p>
-        )}
-      </section>
+          ))}
+          {presets.data.length === 0 && (
+            <EmptyState
+              icon="sliders"
+              title="No presets yet"
+              hint="Configure options on the Download page and save them, or create one here."
+            />
+          )}
+        </section>
+      )}
     </div>
   )
 }

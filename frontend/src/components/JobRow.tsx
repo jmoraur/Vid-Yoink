@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { Job } from '../api/types'
+import type { Job, JobStatus } from '../api/types'
 import { api } from '../api/client'
 import { useCancelling, useJobProgress } from '../ws'
+import { Icon } from './ui/Icon'
 
 function formatBytes(n: number | null | undefined): string {
   if (n == null) return '—'
@@ -18,6 +19,14 @@ function formatEta(s: number | null | undefined): string {
   if (s == null) return '—'
   const m = Math.floor(s / 60)
   return m > 0 ? `${m}m${Math.round(s % 60)}s` : `${Math.round(s)}s`
+}
+
+const CHIP: Record<JobStatus, string> = {
+  queued: 'chip-muted',
+  running: 'chip-accent',
+  finished: 'chip-ok',
+  error: 'chip-danger',
+  cancelled: 'chip-warn',
 }
 
 export function JobRow({ job }: { job: Job }) {
@@ -52,30 +61,56 @@ export function JobRow({ job }: { job: Job }) {
           {label}
         </span>
         {progress?.playlist_index != null && progress?.playlist_count != null && (
-          <span className="muted">
+          <span className="muted font-mono">
             {progress.playlist_index}/{progress.playlist_count}
           </span>
         )}
-        <span className={`job-status status-${job.status}`}>{shownStatus}</span>
-        {active && !cancelling && (
-          <button className="small" onClick={() => cancel.mutate()}>
-            Cancel
-          </button>
-        )}
-        {(job.status === 'error' || job.status === 'cancelled') && (
-          <button className="small" onClick={() => retry.mutate()}>
-            Retry
-          </button>
-        )}
-        {!active && (
-          <button className="small" onClick={() => remove.mutate()}>
-            Delete
-          </button>
-        )}
+        <span className={`chip ${cancelling && active ? 'chip-warn' : CHIP[job.status]}`}>
+          {shownStatus}
+        </span>
+        <span className="job-actions">
+          {active && !cancelling && (
+            <button
+              className="ghost-icon"
+              onClick={() => cancel.mutate()}
+              aria-label="Cancel download"
+              title="Cancel download"
+            >
+              <Icon name="x" />
+            </button>
+          )}
+          {(job.status === 'error' || job.status === 'cancelled') && (
+            <button
+              className="ghost-icon"
+              onClick={() => retry.mutate()}
+              aria-label="Retry download"
+              title="Retry download"
+            >
+              <Icon name="retry" />
+            </button>
+          )}
+          {!active && (
+            <button
+              className="ghost-icon"
+              onClick={() => remove.mutate()}
+              aria-label="Delete from list"
+              title="Delete from list"
+            >
+              <Icon name="trash" />
+            </button>
+          )}
+        </span>
       </div>
       {job.status === 'running' && progress?.status === 'downloading' && (
         <div className="job-progress">
-          <div className="bar">
+          <div
+            className="bar"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={pct ?? undefined}
+            aria-label="Download progress"
+          >
             <div className="fill" style={{ width: `${pct ?? 0}%` }} />
           </div>
           <span className="stats">

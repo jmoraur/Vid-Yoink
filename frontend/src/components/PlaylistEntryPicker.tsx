@@ -85,7 +85,7 @@ export function PlaylistEntryPicker({ entries, totalCount, value, onChange }: Pr
                   />
                   <span className="entry-index">{i + 1}.</span>
                   <span className="entry-title">{entry.title ?? entry.id}</span>
-                  {entry.already_downloaded && <span className="badge">downloaded</span>}
+                  {entry.already_downloaded && <span className="chip chip-ok">downloaded</span>}
                 </label>
               </li>
             ))}

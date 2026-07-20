@@ -41,6 +41,7 @@ export function OptionsForm({ value, onChange, heights }: Props) {
             <button
               type="button"
               className={value.mode === 'video' ? 'active' : ''}
+              aria-pressed={value.mode === 'video'}
               onClick={() => set('mode', 'video')}
             >
               Video
@@ -48,6 +49,7 @@ export function OptionsForm({ value, onChange, heights }: Props) {
             <button
               type="button"
               className={value.mode === 'audio' ? 'active' : ''}
+              aria-pressed={value.mode === 'audio'}
               onClick={() => set('mode', 'audio')}
             >
               Audio only

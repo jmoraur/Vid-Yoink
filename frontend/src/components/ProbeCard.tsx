@@ -21,7 +21,13 @@ export function ProbeCard({ probe, playlistItems, onPlaylistItems }: Props) {
   return (
     <div className="probe-card">
       <div className="probe-head">
-        {probe.thumbnail && <img src={probe.thumbnail} alt="" />}
+        {probe.thumbnail && (
+          <img
+            src={probe.thumbnail}
+            alt={probe.title ? `Thumbnail for ${probe.title}` : 'Video thumbnail'}
+            loading="lazy"
+          />
+        )}
         <div>
           <p className="probe-title">{probe.title ?? '(untitled)'}</p>
           <p className="muted">

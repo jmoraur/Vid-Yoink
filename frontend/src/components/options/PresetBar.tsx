@@ -26,6 +26,7 @@ export function PresetBar({ options, onLoad }: Props) {
     <div className="preset-bar">
       <select
         value=""
+        aria-label="Load preset"
         onChange={(e) => {
           const preset = presets.data?.find((p) => p.id === Number(e.target.value))
           if (preset) onLoad(preset.options)

@@ -6,6 +6,8 @@ import { DEFAULT_OPTIONS, type DownloadOptions } from '../api/types'
 import { ProbeCard } from '../components/ProbeCard'
 import { OptionsForm } from '../components/options/OptionsForm'
 import { PresetBar } from '../components/options/PresetBar'
+import { Icon } from '../components/ui/Icon'
+import { Spinner } from '../components/ui/Spinner'
 
 function useDebounced(value: string, ms: number): string {
   const [debounced, setDebounced] = useState(value)
@@ -53,15 +55,16 @@ export function NewDownload() {
             setOptions((o) => ({ ...o, playlist_items: null })) // selection belongs to old URL
           }}
           placeholder="Paste a video or playlist URL…"
+          aria-label="Video or playlist URL"
           autoFocus
         />
         <button type="submit" disabled={create.isPending || !url.trim()}>
-          Download
+          <Icon name="download" /> Download
         </button>
       </form>
       {create.isError && <p className="error">{create.error.message}</p>}
 
-      {probe.isFetching && <p className="muted">Fetching info…</p>}
+      {probe.isFetching && <Spinner label="Fetching info…" />}
       {probe.isError && <p className="error">Could not read this URL: {probe.error.message}</p>}
       {probe.data && (
         <ProbeCard

@@ -1,0 +1,109 @@
+/* App shell: column, header, nav, vault banner, responsive behavior. */
+
+.app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--sp-4) clamp(0.75rem, 3vw, 1.5rem) var(--sp-6);
+}
+
+/* Two rows: wordmark + theme toggle, then the nav on its own line —
+   six icon tabs never fit beside the wordmark in an 800px column. */
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  margin-bottom: var(--sp-5);
+  padding-block: var(--sp-2);
+}
+
+.theme-toggle {
+  margin-left: auto;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.wordmark svg {
+  color: var(--accent);
+}
+
+nav {
+  display: flex;
+  gap: var(--sp-1);
+  order: 3;
+  flex-basis: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+nav::-webkit-scrollbar {
+  display: none;
+}
+
+nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--r-pill);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+nav a:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+nav a.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.nav-badge {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* --- vault banner --- */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: color-mix(in srgb, var(--warn) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  color: var(--text);
+  border-radius: var(--r-m);
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-4);
+  font-size: var(--fs-sm);
+}
+
+.banner svg {
+  color: var(--warn);
+  flex-shrink: 0;
+}
+
+.banner a {
+  color: var(--accent);
+}

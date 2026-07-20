@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
+import { ErrorState } from '../components/ui/ErrorState'
+import { Icon } from '../components/ui/Icon'
+import { Skeleton } from '../components/ui/Skeleton'
 
 function useVaultInvalidate() {
   const queryClient = useQueryClient()
@@ -231,12 +234,27 @@ function GeneralSettings() {
       queryClient.invalidateQueries({ queryKey: ['settings'] })
     },
   })
-  if (!settings.data) return null
+  if (settings.isPending) {
+    return (
+      <div className="options-form settings-card">
+        <h2>General</h2>
+        <Skeleton lines={1} />
+      </div>
+    )
+  }
+  if (settings.isError) {
+    return (
+      <div className="options-form settings-card">
+        <h2>General</h2>
+        <ErrorState message={settings.error.message} onRetry={() => settings.refetch()} />
+      </div>
+    )
+  }
   const dirty = dir !== null || conc !== null
 
   return (
-    <div className="options-form" style={{ marginBottom: '1rem' }}>
-      <h2 style={{ marginTop: 0 }}>General</h2>
+    <div className="options-form settings-card">
+      <h2>General</h2>
       {!settings.data.ffmpeg_available && (
         <p className="error">
           ffmpeg was not found on this system — merging video+audio, audio extraction and
@@ -283,19 +301,32 @@ export function Settings() {
     <div>
       <GeneralSettings />
       <div className="options-form">
-        <div className="row" style={{ alignItems: 'center' }}>
-          <h2 style={{ margin: 0 }} className="grow">
-            Credential vault
-          </h2>
+        <div className="card-title-row">
+          <h2>Credential vault</h2>
           {vault.data?.state === 'unlocked' && (
             <button className="small" onClick={() => lock.mutate()}>
-              Lock now
+              <Icon name="lock" size={14} /> Lock now
             </button>
           )}
-          <span className={`job-status status-${vault.data?.state === 'unlocked' ? 'finished' : 'cancelled'}`}>
-            {vault.data?.state ?? '…'}
-          </span>
+          {vault.data && (
+            <span
+              className={`chip ${
+                vault.data.state === 'unlocked'
+                  ? 'chip-ok'
+                  : vault.data.state === 'locked'
+                    ? 'chip-warn'
+                    : 'chip-muted'
+              }`}
+            >
+              <Icon name={vault.data.state === 'unlocked' ? 'unlock' : 'lock'} size={12} />
+              {vault.data.state}
+            </span>
+          )}
         </div>
+        {vault.isPending && <Skeleton lines={1} />}
+        {vault.isError && (
+          <ErrorState message={vault.error.message} onRetry={() => vault.refetch()} />
+        )}
         {vault.data?.state === 'uninitialized' && <InitPanel />}
         {vault.data?.state === 'locked' && <UnlockPanel />}
         {vault.data?.state === 'unlocked' && (

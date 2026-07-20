@@ -2,6 +2,10 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
+import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
+import { Icon } from '../components/ui/Icon'
+import { Skeleton } from '../components/ui/Skeleton'
 
 export function Archive() {
   const [q, setQ] = useState('')
@@ -24,29 +28,52 @@ export function Archive() {
         does not cause re-downloads. Delete an entry to make it downloadable again.
       </p>
       <div className="page-actions">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by title or video ID…"
-          className="search"
-        />
+        <div className="search-wrap">
+          <Icon name="search" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by title or video ID…"
+            aria-label="Search archive"
+            className="search"
+          />
+        </div>
       </div>
-      <section className="jobs">
-        {entries.data?.map((e) => (
-          <div className="job" key={e.id}>
-            <div className="job-main">
-              <span className="job-title">{e.title ?? `${e.extractor}: ${e.video_id}`}</span>
-              <span className="muted">
-                {e.extractor} · {e.video_id}
-              </span>
-              <button className="small" onClick={() => remove.mutate(e.id)}>
-                Delete
-              </button>
+      {entries.isPending && <Skeleton lines={3} />}
+      {entries.isError && (
+        <ErrorState message={entries.error.message} onRetry={() => entries.refetch()} />
+      )}
+      {entries.data && (
+        <section className="jobs">
+          {entries.data.map((e) => (
+            <div className="job" key={e.id}>
+              <div className="job-main">
+                <span className="job-title">{e.title ?? `${e.extractor}: ${e.video_id}`}</span>
+                <span className="muted font-mono">
+                  {e.extractor} · {e.video_id}
+                </span>
+                <span className="job-actions">
+                  <button
+                    className="ghost-icon"
+                    onClick={() => remove.mutate(e.id)}
+                    aria-label="Delete archive entry"
+                    title="Delete archive entry (allows re-download)"
+                  >
+                    <Icon name="trash" />
+                  </button>
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
-        {entries.data?.length === 0 && <p className="muted">Archive is empty.</p>}
-      </section>
+          ))}
+          {entries.data.length === 0 && (
+            <EmptyState
+              icon="archive"
+              title="Archive is empty"
+              hint={q ? 'Nothing matches this search.' : 'Finished downloads are recorded here.'}
+            />
+          )}
+        </section>
+      )}
     </div>
   )
 }
