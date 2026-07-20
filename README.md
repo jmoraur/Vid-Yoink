@@ -28,7 +28,7 @@ site credentials in an encrypted vault. Runs entirely on your machine, bound to
 ## Install (Fedora)
 
 Download the `.noarch.rpm` from the
-[latest release](https://github.com/jmorarur/Vid-Yoink/releases) and:
+[latest release](https://github.com/jmoraur/Vid-Yoink/releases) and:
 
 ```sh
 sudo dnf install ./yoink-*.noarch.rpm

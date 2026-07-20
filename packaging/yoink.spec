@@ -3,7 +3,7 @@ Version:        0.1.0
 Release:        1%{?dist}
 Summary:        Local web UI for yt-dlp: downloads, playlists, subscriptions, credential vault
 License:        PolyForm-Noncommercial-1.0.0
-URL:            https://github.com/jmorarur/Vid-Yoink
+URL:            https://github.com/jmoraur/Vid-Yoink
 # Produced by packaging/make-source-tarball.sh (git archive + pre-built frontend)
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
