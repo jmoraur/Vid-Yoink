@@ -1,7 +1,5 @@
 # yoink — local yt-dlp web downloader
 
-Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
-
 ## Milestones
 
 - [x] **M1 — End-to-end skeleton** *(done 2026-07-10: verified generic mp4 + real YouTube
@@ -51,12 +49,31 @@ Plan reference: ~/.claude/plans/lazy-juggling-gadget.md (approved 2026-07-10)
       jobs for the same video can both download it (per-job archive snapshot; DB
       dedupes, only bandwidth wasted).)*
 
+## M7 — Frontend redesign + publishing (2026-07-21)
+
+- [ ] Repo hygiene: remove private path references
+- [ ] Frontend redesign in place: design tokens + light/dark themes (`light-dark()`,
+      persisted toggle), responsive to 360px, icon nav + queue badge, unified chip
+      system, transfer-strip progress bar, skeleton/error/empty states on all list
+      pages, accessibility pass (focus-visible, aria, reduced motion). No new deps.
+- [ ] Packaging code changes: frontend builds into `yoink/static/` (shipped in wheel),
+      `uvicorn[standard]` → `uvicorn` + `websockets` (Fedora has no extras)
+- [ ] LICENSE: PolyForm Noncommercial 1.0.0
+- [ ] Launcher/desktop file: dual-mode launcher (dev checkout or system install),
+      no hardcoded paths
+- [ ] RPM: source tarball script (pre-built frontend), `packaging/yoink.spec`
+      (noarch, distro deps, Recommends ffmpeg/chromium), build + rpmlint +
+      install/uninstall verification
+- [ ] README rewrite for the published repo (install via RPM as primary path)
+- [ ] Publish: GitHub repo Vid-Yoink, tag v0.1.0, release with RPM attached, CI
+      workflow for future releases
+
 ## Deferred / future reference
 
-- **Public cross-platform distribution** — analyzed 2026-07-10, deliberately deferred;
-  the app stays local. Options and tradeoffs (downstream packaging fixes vs. upstream
-  re-architecture, tool-vs-appliance decision, what survives a rewrite) are in
-  [distribution-plan.md](distribution-plan.md).
+- **Public cross-platform distribution** — analyzed 2026-07-10, initially deferred;
+  M7 (2026-07-21) implements the Fedora/RPM + GitHub slice of it. The full analysis
+  (downstream packaging fixes vs. upstream re-architecture, tool-vs-appliance decision,
+  what survives a rewrite) is in [distribution-plan.md](distribution-plan.md).
 
 ## Notes
 
