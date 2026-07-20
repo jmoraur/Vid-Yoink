@@ -12,7 +12,7 @@ from .scheduler import scheduler_loop
 from .vault import Vault
 from .ws import Broadcaster
 
-FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+FRONTEND_DIST = Path(__file__).resolve().parent / "static"
 
 
 class SPAStaticFiles(StaticFiles):

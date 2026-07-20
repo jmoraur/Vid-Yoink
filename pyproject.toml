@@ -2,10 +2,15 @@
 name = "yoink"
 version = "0.1.0"
 description = "Local web UI for yt-dlp: downloads, playlists, subscriptions, credential vault"
+license = "PolyForm-Noncommercial-1.0.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
-    "uvicorn[standard]>=0.30",
+    # plain uvicorn + explicit websockets (not uvicorn[standard]): Fedora's
+    # python3-uvicorn provides no extras, and /ws needs a websockets impl
+    "uvicorn>=0.30",
+    "websockets>=13",
     "yt-dlp>=2026.6.9",
     "cryptography>=43",
 ]
@@ -26,3 +31,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["yoink"]
+# The built frontend (VCS-ignored) ships inside the wheel. `artifacts` globs
+# are silently skipped when absent, so a fresh clone still installs.
+artifacts = ["yoink/static/**"]
