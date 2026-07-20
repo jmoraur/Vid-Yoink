@@ -4,7 +4,8 @@
 # cleanly when the window closes. No hanging servers, no locked databases.
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+REPO_ROOT=$(dirname "$SCRIPT_DIR")  # meaningful only in a dev checkout
 
 PORT="${YOINK_PORT:-8090}"
 URL="http://127.0.0.1:$PORT"
@@ -52,20 +53,31 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 if ! server_up; then
-    # The venv is only (re)built when missing, via uv — which lives in
-    # ~/.local/bin and is NOT on the app-menu session PATH, so resolve it
-    # explicitly. Normal launches skip this and start the venv binary directly
-    # (no `uv run` wrapper process, so SIGTERM reaches uvicorn itself).
-    if [ ! -x .venv/bin/yoink ]; then
-        UV=$(command -v uv || true)
-        [ -z "$UV" ] && for c in "$HOME/.local/bin/uv" "$HOME/.cargo/bin/uv"; do
-            [ -x "$c" ] && UV="$c" && break
-        done
-        [ -z "$UV" ] && fail "no .venv and uv not found — run 'uv sync' in $PWD once"
-        "$UV" sync --frozen --quiet || "$UV" sync --quiet \
-            || fail "uv sync failed — see $LOG_DIR/launcher.log"
+    # Resolve the server binary: env override, then dev checkout, then the
+    # system-installed entry point (RPM layout).
+    if [ -n "${YOINK_BIN:-}" ]; then
+        SERVER_BIN="$YOINK_BIN"
+    elif [ -f "$REPO_ROOT/pyproject.toml" ]; then
+        # Dev checkout: the venv is only (re)built when missing, via uv —
+        # which lives in ~/.local/bin and is NOT on the app-menu session PATH,
+        # so resolve it explicitly. Normal launches skip this and start the
+        # venv binary directly (no `uv run` wrapper process, so SIGTERM
+        # reaches uvicorn itself).
+        if [ ! -x "$REPO_ROOT/.venv/bin/yoink" ]; then
+            UV=$(command -v uv || true)
+            [ -z "$UV" ] && for c in "$HOME/.local/bin/uv" "$HOME/.cargo/bin/uv"; do
+                [ -x "$c" ] && UV="$c" && break
+            done
+            [ -z "$UV" ] && fail "no .venv and uv not found — run 'uv sync' in $REPO_ROOT once"
+            (cd "$REPO_ROOT" && { "$UV" sync --frozen --quiet || "$UV" sync --quiet; }) \
+                || fail "uv sync failed — see $LOG_DIR/launcher.log"
+        fi
+        SERVER_BIN="$REPO_ROOT/.venv/bin/yoink"
+    else
+        SERVER_BIN=$(command -v yoink || true)
+        [ -z "$SERVER_BIN" ] && fail "yoink is not installed (no 'yoink' on PATH)"
     fi
-    .venv/bin/yoink --port "$PORT" >> "$LOG_DIR/server.log" 2>&1 &
+    "$SERVER_BIN" --port "$PORT" >> "$LOG_DIR/server.log" 2>&1 &
     SERVER_PID=$!
     for _ in $(seq 1 100); do
         server_up && break
@@ -77,8 +89,9 @@ if ! server_up; then
     server_up || fail "server did not become ready — see $LOG_DIR/server.log"
 fi
 
-command -v chromium-browser >/dev/null 2>&1 || [ -n "${YOINK_BROWSER:-}" ] \
-    || fail "chromium-browser not found (set YOINK_BROWSER to use another browser)"
+CHROMIUM=$(command -v chromium-browser || command -v chromium || true)
+[ -n "$CHROMIUM" ] || [ -n "${YOINK_BROWSER:-}" ] \
+    || fail "chromium not found (set YOINK_BROWSER to use another browser)"
 
 # Dedicated app window. The private user-data-dir gives yoink its own browser
 # process we can wait on; a second launch of this script joins that process,
@@ -90,7 +103,7 @@ if [ -n "${YOINK_BROWSER:-}" ]; then
     # browser command returns before the window closes)
     $YOINK_BROWSER "$URL" &
 else
-    chromium-browser --app="$URL" \
+    "$CHROMIUM" --app="$URL" \
         --user-data-dir="$DATA_DIR/browser-profile" \
         --no-first-run --no-default-browser-check \
         >/dev/null 2>&1 &

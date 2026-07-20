@@ -2,8 +2,7 @@
 Type=Application
 Name=Yoink
 Comment=yt-dlp downloads, playlists and subscriptions
-Exec=/home/jm/Music/Projects/012-downloader/scripts/yoink-app
-Path=/home/jm/Music/Projects/012-downloader
+Exec=yoink-app
 Icon=yoink
 Categories=Utility;Network;AudioVideo;
 Terminal=false
