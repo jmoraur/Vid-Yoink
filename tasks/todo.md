@@ -51,21 +51,21 @@
 
 ## M7 — Frontend redesign + publishing (2026-07-21)
 
-- [ ] Repo hygiene: remove private path references
-- [ ] Frontend redesign in place: design tokens + light/dark themes (`light-dark()`,
+- [x] Repo hygiene: remove private path references
+- [x] Frontend redesign in place: design tokens + light/dark themes (`light-dark()`,
       persisted toggle), responsive to 360px, icon nav + queue badge, unified chip
       system, transfer-strip progress bar, skeleton/error/empty states on all list
       pages, accessibility pass (focus-visible, aria, reduced motion). No new deps.
-- [ ] Packaging code changes: frontend builds into `yoink/static/` (shipped in wheel),
+- [x] Packaging code changes: frontend builds into `yoink/static/` (shipped in wheel),
       `uvicorn[standard]` → `uvicorn` + `websockets` (Fedora has no extras)
-- [ ] LICENSE: PolyForm Noncommercial 1.0.0
-- [ ] Launcher/desktop file: dual-mode launcher (dev checkout or system install),
+- [x] LICENSE: PolyForm Noncommercial 1.0.0
+- [x] Launcher/desktop file: dual-mode launcher (dev checkout or system install),
       no hardcoded paths
-- [ ] RPM: source tarball script (pre-built frontend), `packaging/yoink.spec`
+- [x] RPM: source tarball script (pre-built frontend), `packaging/yoink.spec`
       (noarch, distro deps, Recommends ffmpeg/chromium), build + rpmlint +
       install/uninstall verification
-- [ ] README rewrite for the published repo (install via RPM as primary path)
-- [ ] Publish: GitHub repo Vid-Yoink, tag v0.1.0, release with RPM attached, CI
+- [x] README rewrite for the published repo (install via RPM as primary path)
+- [x] Publish: GitHub repo Vid-Yoink, tag v0.1.0, release with RPM attached, CI
       workflow for future releases
 
 ## Deferred / future reference
