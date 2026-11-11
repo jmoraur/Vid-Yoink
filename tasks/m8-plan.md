@@ -256,5 +256,8 @@ google-chrome --headless=new --hide-scrollbars --user-data-dir="$D/prof" \
 kill %1
 ```
 
+Careful: the throwaway copy only has its own *data* folder. A test download with default
+options still lands in the real `~/Downloads` — always pass `"output_dir"` in tests.
+
 For a row with a live progress bar and no internet: serve a large file with
 `python3 -m http.server` and download it with a rate limit (`"rate_limit": "900K"`).
