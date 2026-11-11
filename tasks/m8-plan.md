@@ -2,7 +2,8 @@
 
 Written 2026-11-11 after a fresh-eyes review of the whole project (backend read in
 full, app run with sample data, every page viewed in light, dark and phone width).
-Nothing in this plan is built yet. Work top to bottom; one commit per numbered step.
+Phases 1 and 2 were built on 2026-11-11 (branch `m8-fixes-and-redesign`, one commit per
+step). Open: 1.8 needs a push to be seen green on GitHub; Phase 3 is not started.
 
 **How to resume:** start at the first unchecked box. Each step lists where to change
 the code and how to know it is done.
@@ -204,7 +205,7 @@ Target main screen:
     "Delete? Yes / No", no dialog library).
   - Settings: split the status line into separate rows (yt-dlp version, ffmpeg).
 
-- [ ] **2.7 Check the result**
+- [x] **2.7 Check the result**
   - `npm run build` clean, `uv run pytest` green, `uv run ruff check yoink/ tests/`.
   - Screenshots of every screen: 1100×900 and 390×800, light and dark (recipe below).
   - Keyboard only: paste, download, cancel, open options, switch section.

@@ -1,5 +1,5 @@
 Name:           yoink
-Version:        0.1.0
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        Local web UI for yt-dlp: downloads, playlists, subscriptions, credential vault
 License:        PolyForm-Noncommercial-1.0.0
@@ -66,5 +66,15 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/yoink.desktop
 %{_datadir}/icons/hicolor/scalable/apps/yoink.svg
 
 %changelog
+* Wed Nov 11 2026 Jan Moraru <jan@moraru.ch> - 0.2.0-1
+- Failed downloads are reported as failed (were saved as finished)
+- Requests from other websites are refused (Host and Origin check)
+- The queue survives closing the app; unfinished downloads resume
+- Subscription checks skip items already queued, give up after 3 failures,
+  and read up to 5000 entries
+- Launcher also finds Chrome and Brave
+- New interface: one Downloads screen, three sections, thumbnails,
+  plain-language errors, open folder, retry failed, clear list
+
 * Tue Jul 21 2026 Jan Moraru <jan@moraru.ch> - 0.1.0-1
 - Initial package

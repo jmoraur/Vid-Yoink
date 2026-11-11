@@ -3,22 +3,29 @@
 **yoink** is a local web UI for [yt-dlp](https://github.com/yt-dlp/yt-dlp): download
 videos or audio from YouTube and ~1800 other sites, keep playlists in sync, and store
 site credentials in an encrypted vault. Runs entirely on your machine, bound to
-`127.0.0.1` only — there is no authentication, so never expose it to a network.
+`127.0.0.1` only. There is no login, so never expose it to a network; requests that do
+not come from its own pages on this machine (other websites open in your browser, for
+example) are refused.
 
 ## Features
 
-- **Downloads** with live progress, cancel/retry, concurrent queue, history.
+- **One Downloads screen**: paste a link, press Download, and watch it right there.
+  Rows show a thumbnail, format, size, site and how long ago; one click opens the folder.
+  Failed downloads say what went wrong in plain words and what to do next.
+- **The queue survives closing the app**: unfinished downloads carry on from where they
+  stopped the next time you open it.
 - **Any yt-dlp site** works — the URL is probed and handed to yt-dlp's extractors.
 - **Options UI**: the common cases (audio-only + format, max resolution, output folder,
   playlist item selection, subtitles, embed metadata/thumbnail) are one click; everything
   else lives in collapsible sections (network/proxy/rate limit, SponsorBlock, cookies &
   auth, output template) plus a raw yt-dlp arguments escape hatch that overrides
-  everything. Save any configuration as a named **preset**.
+  everything. Save any configuration as a named **preset** (managed in Settings).
 - **Subscriptions**: save a playlist/channel with a preset; "Check now" or an automatic
   interval downloads **only new items**. "Already downloaded" is tracked by video ID in
   yoink's own database (yt-dlp download-archive semantics) — **moving files into your
-  media library never causes re-downloads**. The Archive page lets you inspect entries or
-  delete one to force a re-download.
+  media library never causes re-downloads**. "Downloaded items" (under Subscriptions)
+  lists what is remembered; remove an entry to allow that video again. An item that
+  keeps failing is given up on after three tries instead of being queued forever.
 - **Credential vault**: per-site logins and cookies.txt contents, encrypted with a master
   password (scrypt + AES-256-GCM). Secrets are held in memory only while unlocked and are
   passed to yt-dlp as in-memory streams — never written to disk in plaintext.
@@ -94,8 +101,11 @@ tag `v<version>` and push — CI builds the RPM and attaches it to the GitHub re
 ## Notes & limitations
 
 - Cancelling takes effect between download chunks; metadata extraction and an in-flight
-  ffmpeg post-processing step can't be interrupted — the job shows "cancelling…" until it
+  ffmpeg post-processing step can't be interrupted — the job shows "Stopping…" until it
   settles. Partial `.part` files are kept and resumed on retry.
+- Thumbnails in the list are loaded from the video site each time; yoink stores no
+  pictures. Offline, rows show an icon instead.
+- Settings warns when yt-dlp is more than 90 days old (sites change, old versions break).
 - The playlist preview on the download page shows the first 500 entries. Subscription
   checks read up to 5000, so only truly enormous playlists can have items missed.
 - Changing "Parallel downloads" in Settings takes effect after a restart.

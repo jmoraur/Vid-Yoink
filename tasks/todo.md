@@ -68,16 +68,32 @@
 - [x] Publish: GitHub repo Vid-Yoink, tag v0.1.0, release with RPM attached, CI
       workflow for future releases
 
-## M8 — Fixes + interface rework (planned 2026-11-11, not started)
+## M8 — Fixes + interface rework (2026-11-11)
 
 Fresh-eyes review found two confirmed problems (failed downloads saved as "finished";
 any web page can reach the local server), a launcher that only finds Chromium, weak
-spots in subscriptions, and an interface that needs a new layout more than new paint.
+spots in subscriptions, and an interface that needed a new layout more than new paint.
 Full findings, steps and done-checks: [m8-plan.md](m8-plan.md).
 
-- [ ] Phase 1 — correctness and safety (steps 1.1–1.8)
-- [ ] Phase 2 — interface rework (steps 2.1–2.7)
+- [x] Phase 1 — correctness and safety (steps 1.1–1.7 done and verified; 1.8 CI workflow
+      written and passing locally, not yet run on GitHub — needs a push)
+- [x] Phase 2 — interface rework (steps 2.1–2.7; version 0.2.0)
 - [ ] Phase 3 — new features (optional, pick per item)
+
+Verified during M8: 54 backend tests + wording check green; real YouTube download,
+repeat (skipped) and unavailable video (error) with yt-dlp 2026.10.26; foreign
+Host/Origin refused by the real server; a stopped download resumed from its `.part`
+file after a restart; launcher opened a Chrome app window and stopped the server when
+the browser ended; every screen checked at 1100 px and 390 px in both themes;
+keyboard-only run of paste, download, cancel, options, open folder, switch section.
+
+Deviations from the plan, deliberate: Retry re-queues the same row instead of adding a
+second one (so "Retry failed" cannot pile up duplicates); the `site` column holds the
+domain ("youtube.com") rather than yt-dlp's extractor name; "Clear" under the "All"
+filter removes finished rows only, so failed ones stay retryable.
+
+Not done here: the app-menu entry on this machine still starts the installed 0.1.0 RPM
+(old launcher) until a 0.2.0 RPM is installed or `scripts/install_desktop.sh` is run.
 
 ## Deferred / future reference
 
