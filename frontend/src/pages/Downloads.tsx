@@ -7,6 +7,7 @@ import { ProbeCard } from '../components/ProbeCard'
 import { OptionsForm } from '../components/options/OptionsForm'
 import { PresetBar } from '../components/options/PresetBar'
 import { summarize } from '../components/options/summarize'
+import { splitLinks } from '../lib/format'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Icon } from '../components/ui/Icon'
@@ -49,7 +50,8 @@ export function Downloads() {
   const queryClient = useQueryClient()
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['downloads'] })
 
-  const typed = url.trim()
+  const links = splitLinks(url) // several links, one per line = one download each
+  const typed = links.length === 1 ? links[0] : '' // only a single link gets a preview
   const probeUrl = useDebounced(typed, 700)
   const probe = useQuery({
     queryKey: ['probe', probeUrl],
@@ -62,12 +64,15 @@ export function Downloads() {
 
   const jobs = useQuery({ queryKey: ['downloads'], queryFn: api.listDownloads })
   const create = useMutation({
-    mutationFn: () => api.createDownload(typed, options),
-    onSuccess: () => {
-      // stay here: the new job shows up under "Now"; the options stay for the next link
-      setUrl('')
+    mutationFn: async () => {
+      const results = await Promise.allSettled(links.map((l) => api.createDownload(l, options)))
+      // stay here: new jobs show up under "Now"; the options stay for the next link.
+      // Links that were refused stay in the field, so pressing again cannot repeat the rest.
+      setUrl(links.filter((_, i) => results[i].status === 'rejected').join('\n'))
       setOptions((o) => ({ ...o, playlist_items: null }))
       refresh()
+      const refused = results.find((r) => r.status === 'rejected')
+      if (refused) throw refused.reason
     },
   })
   const retryFailed = useMutation({ mutationFn: api.retryFailed, onSuccess: refresh })
@@ -89,17 +94,25 @@ export function Downloads() {
         className="download-form"
         onSubmit={(e) => {
           e.preventDefault()
-          if (typed) create.mutate()
+          if (links.length) create.mutate()
         }}
       >
-        <input
+        <textarea
+          rows={Math.min(8, url.split('\n').length)}
           value={url}
           onChange={(e) => {
             setUrl(e.target.value)
             setOptions((o) => ({ ...o, playlist_items: null })) // selection belongs to old URL
           }}
-          placeholder="Paste a video or playlist link…"
-          aria-label="Video or playlist link"
+          onKeyDown={(e) => {
+            // Enter sends, like in a one-line field; Shift+Enter starts another line
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault()
+              e.currentTarget.form?.requestSubmit()
+            }
+          }}
+          placeholder="Paste a video or playlist link, or several (one per line)…"
+          aria-label="Video or playlist links, one per line"
           autoFocus
         />
         <button
@@ -113,8 +126,8 @@ export function Downloads() {
         >
           <Icon name="sliders" size={18} />
         </button>
-        <button type="submit" disabled={create.isPending || !typed}>
-          <Icon name="download" /> Download
+        <button type="submit" disabled={create.isPending || links.length === 0}>
+          <Icon name="download" /> Download{links.length > 1 && ` ${links.length}`}
         </button>
       </form>
       {create.isError && <p className="error">{create.error.message}</p>}
@@ -138,6 +151,11 @@ export function Downloads() {
         </p>
       )}
 
+      {links.length > 1 && (
+        <p className="hint">
+          {links.length} links. Each one becomes its own download, with the options above.
+        </p>
+      )}
       {probeIsCurrent && probe.isFetching && <Spinner label="Looking up the link…" />}
       {probeIsCurrent && probe.isError && (
         <p className="error">Could not read this link: {probe.error.message}</p>

@@ -45,18 +45,31 @@
 .download-form {
   display: flex;
   gap: var(--sp-2);
+  align-items: flex-start; /* buttons keep one-line height when the field grows */
+  --line: 1.4;
+  --one-line: calc(var(--fs-base) * var(--line) + 1.4rem + 2px);
 }
 
-.download-form input {
+/* One row for one link, growing a row per pasted line. Lines never wrap. */
+.download-form textarea {
   flex: 1;
+  width: auto;
   min-width: 0;
   padding: 0.7rem 0.9rem;
   font-size: var(--fs-base);
+  line-height: var(--line);
   font-family: var(--font-mono);
+  resize: none;
+  white-space: pre;
+  overflow-x: hidden;
+}
+
+.download-form button {
+  height: var(--one-line);
 }
 
 .download-form button[type='submit'] {
-  padding: 0.7rem 1.2rem;
+  padding: 0 1.2rem;
 }
 
 .download-form .options-toggle {
@@ -840,15 +853,11 @@ button.link:hover:not(:disabled) {
     flex-wrap: wrap;
   }
 
-  .download-form input {
+  .download-form textarea {
     flex-basis: 100%;
   }
 
   .download-form button[type='submit'] {
     flex: 1;
-  }
-
-  .download-form .options-toggle {
-    padding-block: 0.7rem;
   }
 }

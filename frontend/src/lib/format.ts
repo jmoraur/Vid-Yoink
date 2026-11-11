@@ -70,3 +70,8 @@ export function shortLink(url: string): string {
     return url
   }
 }
+
+/** The links in a pasted block of text: one per line, blanks and repeats dropped. */
+export function splitLinks(text: string): string[] {
+  return [...new Set(text.split('\n').map((line) => line.trim()).filter(Boolean))]
+}

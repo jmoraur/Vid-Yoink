@@ -1,6 +1,6 @@
 // Run with: npm run check   (plain Node, no test framework)
 import { explain } from './errors.ts'
-import { formatBytes, formatDuration, formatInterval, hostOf, shortLink, timeAgo } from './format.ts'
+import { formatBytes, formatDuration, formatInterval, hostOf, shortLink, splitLinks, timeAgo } from './format.ts'
 
 function same(actual: unknown, expected: unknown) {
   if (actual !== expected) throw new Error(`expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
@@ -44,4 +44,7 @@ same(shortLink('https://www.youtube.com/watch?v=abc'), 'youtube.com · watch?v=a
 same(shortLink('https://vimeo.com/76979871'), 'vimeo.com · 76979871')
 same(shortLink('https://example.com/'), 'example.com')
 same(shortLink('not a link'), 'not a link')
+same(splitLinks(' https://a.example/1 \r\n\nhttps://b.example/2\nhttps://a.example/1\n').join('|'), 'https://a.example/1|https://b.example/2')
+same(splitLinks('ytsearch:two words').length, 1) // spaces do not split, only lines do
+same(splitLinks('  \n ').length, 0)
 console.log('wording checks passed')
