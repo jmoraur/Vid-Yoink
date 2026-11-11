@@ -100,6 +100,7 @@ export interface ProbeEntry {
   title: string | null
   duration: number | null
   url: string | null
+  live_status: string | null
   already_downloaded: boolean
 }
 
@@ -122,6 +123,21 @@ export interface Preset {
   updated_at: string
 }
 
+/** Which items a subscription leaves out. Nothing set = take everything. */
+export interface SubscriptionFilters {
+  after: string | null // "2026-11-01": only items uploaded on this day or later
+  title: string | null // only items whose title contains this
+  skip_shorts: boolean
+  skip_live: boolean // live now, announced, and recordings of past streams
+}
+
+export const NO_FILTERS: SubscriptionFilters = {
+  after: null,
+  title: null,
+  skip_shorts: false,
+  skip_live: false,
+}
+
 export interface Subscription {
   id: number
   name: string
@@ -133,6 +149,8 @@ export interface Subscription {
   next_check_at: string | null
   last_check_result: string | null
   created_at: string
+  filters: SubscriptionFilters
+  filtered_count: number // items the filters have left out so far
 }
 
 export interface SubscriptionIn {
@@ -141,6 +159,7 @@ export interface SubscriptionIn {
   preset_id: number | null
   enabled: boolean
   check_interval_minutes: number | null
+  filters: SubscriptionFilters
 }
 
 export interface ArchiveEntry {

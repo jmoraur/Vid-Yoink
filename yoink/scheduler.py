@@ -4,7 +4,7 @@ functions shared by the scheduler and the manual API endpoints."""
 import asyncio
 import logging
 
-from . import db
+from . import db, filters
 from .jobs import JobManager
 from .models import DownloadOptions
 from .ws import Broadcaster
@@ -41,8 +41,9 @@ async def check_subscription(
     sub_id: int, manager: JobManager, broadcaster: Broadcaster
 ) -> dict:
     """Probe the subscription URL and enqueue a job for every entry that is not in
-    the archive, not already waiting or running, and has not failed MAX_FAILURES
-    times. Used by both the scheduler and the 'Check now' endpoint."""
+    the archive, not left out by the subscription's filters, not already waiting or
+    running, and has not failed MAX_FAILURES times. Used by both the scheduler and
+    the 'Check now' endpoint."""
     if sub_id in _in_flight:
         return {"subscription_id": sub_id, "new_jobs": 0, "error": "check already running"}
     _in_flight.add(sub_id)
@@ -55,12 +56,25 @@ async def check_subscription(
         error: str | None = None
         try:
             probe = await asyncio.to_thread(
-                probe_url, row["url"], db.archive_keys(), CHECK_LIMIT
+                probe_url, row["url"], db.archive_keys(), CHECK_LIMIT, flatten=True
             )
             options_json = _subscription_options_json(row)
             counts = db.subscription_job_counts(sub_id)
+            wanted = filters.of(row)
+            left_out = db.filtered_keys(sub_id)
             for entry in probe.entries:
                 if entry.already_downloaded or not entry.url:
+                    continue
+                # Filters, first pass: what the listing itself shows (title, Shorts
+                # link, live state). The download judges the rest (upload date) and
+                # remembers it the same way, so no item is looked up twice.
+                key = filters.item_key(entry.model_dump())
+                if key in left_out:
+                    continue
+                reason = wanted and filters.reject_reason(entry.model_dump(), wanted)
+                if reason:
+                    if key:
+                        db.add_filtered(sub_id, *key, entry.title, reason)
                     continue
                 active, failed = counts.get(entry.url, (0, 0))
                 if failed >= MAX_FAILURES:
@@ -100,7 +114,7 @@ async def seed_subscription(sub_id: int) -> int:
     row = db.get_subscription(sub_id)
     if row is None:
         raise ValueError("no such subscription")
-    probe = await asyncio.to_thread(probe_url, row["url"], set(), CHECK_LIMIT)
+    probe = await asyncio.to_thread(probe_url, row["url"], set(), CHECK_LIMIT, flatten=True)
     count = 0
     for entry in probe.entries:
         if entry.id and entry.ie_key:

@@ -1,8 +1,6 @@
 """Runs the real yt-dlp against this machine only (no internet needed)."""
 
 import threading
-from functools import partial
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
@@ -21,17 +19,6 @@ def run(url, tmp_path):
     opts = build_ydl_opts(DownloadOptions(output_dir=str(tmp_path / "out"), retries=0))
     job_id = db.create_job(url, "{}")
     return run_download_job(job_id, url, opts, threading.Event(), lambda event: None)
-
-
-@pytest.fixture
-def file_url(tmp_path):
-    (tmp_path / "www").mkdir()
-    (tmp_path / "www" / "clip.mp4").write_bytes(b"\0" * 2048)
-    handler = partial(SimpleHTTPRequestHandler, directory=str(tmp_path / "www"))
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    yield f"http://127.0.0.1:{server.server_port}/clip.mp4"
-    server.shutdown()
 
 
 def test_dead_url_is_an_error(tmp_path):

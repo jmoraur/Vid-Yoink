@@ -19,6 +19,19 @@ def test_playlist_conversion_with_archive_check():
     assert [e.already_downloaded for e in result.entries] == [False, True]
 
 
+def test_channel_tabs_are_opened_for_subscription_checks():
+    """A channel address lists tabs (playlists); a check needs the videos in them."""
+    tab = {"_type": "playlist", "title": "Chan - Shorts", "entries": [
+        {"id": "s1", "ie_key": "Youtube", "url": "https://www.youtube.com/shorts/s1"}, None]}
+    live = {"_type": "playlist", "title": "Chan - Live", "entries": [
+        {"id": "l1", "ie_key": "Youtube", "url": "u", "live_status": "was_live"}]}
+    info = {"_type": "playlist", "title": "Chan", "entries": [tab, live]}
+    assert [e.id for e in _to_result(info, set()).entries] == [None, None]  # preview: the tabs
+    videos = _to_result(info, {"youtube l1"}, flatten=True).entries
+    assert [(e.id, e.live_status, e.already_downloaded) for e in videos] == [
+        ("s1", None, False), ("l1", "was_live", True)]
+
+
 def test_video_conversion_heights():
     info = {
         "title": "Vid",

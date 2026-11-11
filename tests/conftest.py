@@ -1,3 +1,7 @@
+import threading
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
 import pytest
 from starlette.testclient import TestClient
 
@@ -19,3 +23,15 @@ def notifications(monkeypatch):
     monkeypatch.setattr("yoink.notify.which", lambda name: "/usr/bin/notify-send")
     monkeypatch.setattr("yoink.notify.Popen", lambda argv, **kw: sent.append(argv))
     return sent
+
+
+@pytest.fixture
+def file_url(tmp_path):
+    """A small file served from this machine, for real yt-dlp runs without internet."""
+    (tmp_path / "www").mkdir()
+    (tmp_path / "www" / "clip.mp4").write_bytes(b"\0" * 2048)
+    handler = partial(SimpleHTTPRequestHandler, directory=str(tmp_path / "www"))
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    yield f"http://127.0.0.1:{server.server_port}/clip.mp4"
+    server.shutdown()

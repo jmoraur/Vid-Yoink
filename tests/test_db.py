@@ -78,3 +78,9 @@ def test_version_1_database_is_upgraded(tmp_path):
     row = db.get_job(row["id"])
     assert (row["thumbnail"], row["site"], row["filesize"], row["skipped"]) == (
         "https://x/t.jpg", "Youtube", 1234, 2)
+    # and what version 3 added: subscription filters and their memory
+    sub_id = db.create_subscription("sub", "https://x", None, True, None, '{"skip_live":true}')
+    db.add_filtered(sub_id, "youtube", "abc", "A", "is a live stream")
+    assert db.get_subscription(sub_id)["filtered_count"] == 1
+    db.delete_subscription(sub_id)
+    assert db.filtered_keys(sub_id) == set()  # goes with its subscription

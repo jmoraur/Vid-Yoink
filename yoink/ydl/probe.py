@@ -19,15 +19,31 @@ PROBE_OPTS = {
 }
 
 
-def probe_url(url: str, archive_keys: set[str], limit: int = PREVIEW_LIMIT) -> ProbeResult:
+def probe_url(
+    url: str, archive_keys: set[str], limit: int = PREVIEW_LIMIT, flatten: bool = False
+) -> ProbeResult:
+    """flatten: a channel address lists its tabs (Videos, Live, Shorts), each a
+    playlist of its own. Subscription checks want the videos inside them. The
+    preview keeps the tabs, because "playlist items 1,3" counts tabs there."""
     with YoutubeDL({**PROBE_OPTS, "playlistend": limit}) as ydl:
         info = ydl.extract_info(url, download=False)
-    return _to_result(info or {}, archive_keys)
+    return _to_result(info or {}, archive_keys, flatten)
 
 
-def _to_result(info: dict, archive_keys: set[str]) -> ProbeResult:
+def _videos(entries) -> list[dict]:
+    found = []
+    for e in entries or []:
+        if e and e.get("_type") == "playlist":
+            found += _videos(e.get("entries"))
+        elif e:
+            found.append(e)
+    return found
+
+
+def _to_result(info: dict, archive_keys: set[str], flatten: bool = False) -> ProbeResult:
     if info.get("_type") == "playlist":
-        entries = [e for e in (info.get("entries") or []) if e]
+        entries = info.get("entries") or []
+        entries = _videos(entries) if flatten else [e for e in entries if e]
         return ProbeResult(
             kind="playlist",
             title=info.get("title"),
@@ -41,6 +57,7 @@ def _to_result(info: dict, archive_keys: set[str]) -> ProbeResult:
                     title=e.get("title"),
                     duration=e.get("duration"),
                     url=e.get("url") or e.get("webpage_url"),
+                    live_status=e.get("live_status"),
                     already_downloaded=_archive_key(e) in archive_keys,
                 )
                 for e in entries

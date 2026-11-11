@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, NavLink, Route, Routes } from 'react-router-dom'
 import { api } from '../api/client'
-import type { Subscription, SubscriptionIn } from '../api/types'
+import { NO_FILTERS, type Subscription, type SubscriptionFilters, type SubscriptionIn } from '../api/types'
 import { ConfirmDelete } from '../components/ui/ConfirmDelete'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
@@ -18,6 +18,20 @@ const EMPTY: SubscriptionIn = {
   preset_id: null,
   enabled: true,
   check_interval_minutes: null,
+  filters: NO_FILTERS,
+}
+
+/** "since 1 Nov 2026 · title has “news” · no Shorts", or nothing when no filter is set. */
+function describeFilters(f: SubscriptionFilters): string {
+  return [
+    // T00:00 = local midnight; a bare date would be read as UTC and can show the day before
+    f.after && `since ${new Date(`${f.after}T00:00`).toLocaleDateString(undefined, { dateStyle: 'medium' })}`,
+    f.title && `title has “${f.title}”`,
+    f.skip_shorts && 'no Shorts',
+    f.skip_live && 'no live streams',
+  ]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 function SubscriptionEditor({
@@ -28,6 +42,8 @@ function SubscriptionEditor({
   onDone: () => void
 }) {
   const [form, setForm] = useState<SubscriptionIn>(sub ?? EMPTY)
+  const setFilters = (change: Partial<SubscriptionFilters>) =>
+    setForm({ ...form, filters: { ...form.filters, ...change } })
   const [seedExisting, setSeedExisting] = useState(sub === null)
   const queryClient = useQueryClient()
   const presets = useQuery({ queryKey: ['presets'], queryFn: api.listPresets })
@@ -115,6 +131,49 @@ function SubscriptionEditor({
           </label>
         )}
       </div>
+      <fieldset className="filters-box">
+        <legend>Only download items…</legend>
+        <div className="row">
+          <label>
+            uploaded on or after
+            <input
+              type="date"
+              value={form.filters.after ?? ''}
+              onChange={(e) => setFilters({ after: e.target.value || null })}
+            />
+          </label>
+          <label className="grow">
+            whose title contains
+            <input
+              value={form.filters.title ?? ''}
+              onChange={(e) => setFilters({ title: e.target.value.trim() ? e.target.value : null })}
+              placeholder="any title"
+            />
+          </label>
+        </div>
+        <div className="row checks">
+          <label>
+            <input
+              type="checkbox"
+              checked={form.filters.skip_shorts}
+              onChange={(e) => setFilters({ skip_shorts: e.target.checked })}
+            />
+            Skip Shorts
+          </label>
+          <label title="Streams that are live now, announced ones, and recordings of past streams">
+            <input
+              type="checkbox"
+              checked={form.filters.skip_live}
+              onChange={(e) => setFilters({ skip_live: e.target.checked })}
+            />
+            Skip live streams
+          </label>
+        </div>
+        <p className="hint">
+          Items that are left out are remembered, so later checks do not look at them again.
+          {sub !== null && ' If you change these, the next check looks at them once more.'}
+        </p>
+      </fieldset>
       <div className="row actions">
         <button
           disabled={!form.name.trim() || !form.url.trim() || save.isPending}
@@ -179,6 +238,8 @@ function SubscriptionRow({ sub }: { sub: Subscription }) {
         {sub.enabled && sub.next_check_at && (
           <span title={fullDate(sub.next_check_at)}>next check {timeAgo(sub.next_check_at)}</span>
         )}
+        {describeFilters(sub.filters) && <span>{describeFilters(sub.filters)}</span>}
+        {sub.filtered_count > 0 && <span>{sub.filtered_count} left out</span>}
         <span>
           <Link to={`/subscriptions/archive?sub=${sub.id}`}>downloaded items</Link>
         </span>

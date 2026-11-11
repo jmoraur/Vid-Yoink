@@ -4,7 +4,7 @@
 import asyncio
 import threading
 
-from . import db, notify
+from . import db, filters, notify
 from .models import DownloadOptions
 from .vault import Vault, VaultError, resolve_secrets
 from .ws import Broadcaster
@@ -71,6 +71,11 @@ class JobManager:
                 if row is None:
                     return
                 options = DownloadOptions.model_validate_json(row["options_json"])
+                subscription = (
+                    db.get_subscription(row["subscription_id"])
+                    if row["subscription_id"] is not None
+                    else None
+                )
                 try:
                     # Fails fast with a clear message when the vault is locked or a
                     # referenced label is missing; Retry after unlocking re-runs it.
@@ -92,11 +97,21 @@ class JobManager:
                         self._emit_threadsafe,
                         row["subscription_id"],
                         options.force_download,
+                        filters.of(subscription),
                     )
                 except Exception as exc:  # runner handles expected errors; this is a backstop
                     result = JobResult(status="error", error=f"internal error: {exc!r}")
                 if result.status == "cancelled" and self._stopped_by_shutdown(job_id):
                     db.requeue_job(job_id)
+                    return
+                if result.left_out and result.status == "finished" and not (
+                    result.files or result.error or result.skipped
+                ):
+                    # The subscription's filters said no to everything in this job.
+                    # That is remembered with the subscription; a "finished" row with
+                    # nothing in it would only be clutter, so the row goes.
+                    db.delete_job(job_id)
+                    self._publish_status(job_id, "finished")
                     return
                 db.finish_job(
                     job_id, result.status,

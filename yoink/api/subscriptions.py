@@ -14,7 +14,8 @@ async def list_subscriptions() -> list[SubscriptionOut]:
 @router.post("/subscriptions", status_code=201)
 async def create_subscription(sub: SubscriptionIn) -> SubscriptionOut:
     sub_id = db.create_subscription(
-        sub.name, sub.url, sub.preset_id, sub.enabled, sub.check_interval_minutes
+        sub.name, sub.url, sub.preset_id, sub.enabled, sub.check_interval_minutes,
+        sub.filters.model_dump_json(),
     )
     return SubscriptionOut.from_row(db.get_subscription(sub_id))
 
@@ -22,7 +23,8 @@ async def create_subscription(sub: SubscriptionIn) -> SubscriptionOut:
 @router.put("/subscriptions/{sub_id}")
 async def update_subscription(sub_id: int, sub: SubscriptionIn) -> SubscriptionOut:
     if not db.update_subscription(
-        sub_id, sub.name, sub.url, sub.preset_id, sub.enabled, sub.check_interval_minutes
+        sub_id, sub.name, sub.url, sub.preset_id, sub.enabled, sub.check_interval_minutes,
+        sub.filters.model_dump_json(),
     ):
         raise HTTPException(404, "no such subscription")
     return SubscriptionOut.from_row(db.get_subscription(sub_id))

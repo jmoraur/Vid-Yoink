@@ -457,6 +457,21 @@ button.link:hover:not(:disabled) {
   margin-bottom: 0;
 }
 
+/* a titled group of fields inside a form (subscription filters) */
+.filters-box {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-s);
+  min-width: 0;
+}
+
+.filters-box legend {
+  padding-inline: 0.4rem;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
 /* --- segmented mode toggle --- */
 
 .mode-toggle {

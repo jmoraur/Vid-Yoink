@@ -83,6 +83,16 @@ def init(db_path: Path) -> None:
             for column in ("thumbnail TEXT", "filesize INTEGER", "site TEXT", "skipped INTEGER"):
                 conn.execute(f"ALTER TABLE jobs ADD COLUMN {column}")
             conn.execute("PRAGMA user_version = 2")
+        if version < 3:  # subscription filters, and the items they left out
+            conn.execute("ALTER TABLE subscriptions ADD COLUMN filters_json TEXT")
+            conn.execute(
+                "CREATE TABLE filtered ("
+                " subscription_id INTEGER NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE,"
+                " extractor TEXT NOT NULL, video_id TEXT NOT NULL, title TEXT, reason TEXT,"
+                " created_at TEXT NOT NULL,"
+                " PRIMARY KEY (subscription_id, extractor, video_id))"
+            )
+            conn.execute("PRAGMA user_version = 3")
         # A previous process that was killed mid-download leaves 'running' rows.
         # Put them back in line; the app queues every 'queued' row again at start.
         conn.execute(
@@ -261,14 +271,20 @@ def delete_jobs(statuses: set[str]) -> int:
 # --- subscriptions ---
 
 
+_SUBSCRIPTIONS = (
+    "SELECT s.*, (SELECT COUNT(*) FROM filtered f WHERE f.subscription_id = s.id)"
+    " AS filtered_count FROM subscriptions s"
+)
+
+
 def list_subscriptions() -> list[sqlite3.Row]:
     with session() as conn:
-        return conn.execute("SELECT * FROM subscriptions ORDER BY name").fetchall()
+        return conn.execute(_SUBSCRIPTIONS + " ORDER BY name").fetchall()
 
 
 def get_subscription(sub_id: int) -> sqlite3.Row | None:
     with session() as conn:
-        return conn.execute("SELECT * FROM subscriptions WHERE id = ?", (sub_id,)).fetchone()
+        return conn.execute(_SUBSCRIPTIONS + " WHERE s.id = ?", (sub_id,)).fetchone()
 
 
 def create_subscription(
@@ -277,14 +293,16 @@ def create_subscription(
     preset_id: int | None,
     enabled: bool,
     check_interval_minutes: int | None,
+    filters_json: str | None = None,
 ) -> int:
     next_check = _next_check(check_interval_minutes)
     with session() as conn:
         cur = conn.execute(
-            "INSERT INTO subscriptions"
-            " (name, url, preset_id, enabled, check_interval_minutes, next_check_at, created_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (name, url, preset_id, int(enabled), check_interval_minutes, next_check, utcnow()),
+            "INSERT INTO subscriptions (name, url, preset_id, enabled,"
+            " check_interval_minutes, next_check_at, created_at, filters_json)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (name, url, preset_id, int(enabled), check_interval_minutes, next_check,
+             utcnow(), filters_json),
         )
         return cur.lastrowid
 
@@ -296,11 +314,19 @@ def update_subscription(
     preset_id: int | None,
     enabled: bool,
     check_interval_minutes: int | None,
+    filters_json: str | None = None,
 ) -> bool:
     with session() as conn:
+        # Different filters = a different verdict for every item, so what the old
+        # ones left out is forgotten and the next check looks at those items again.
+        conn.execute(
+            "DELETE FROM filtered WHERE subscription_id = ? AND (SELECT filters_json"
+            " FROM subscriptions WHERE id = ?) IS NOT ?",
+            (sub_id, sub_id, filters_json),
+        )
         cur = conn.execute(
             "UPDATE subscriptions SET name = ?, url = ?, preset_id = ?, enabled = ?,"
-            " check_interval_minutes = ?, next_check_at = ? WHERE id = ?",
+            " check_interval_minutes = ?, next_check_at = ?, filters_json = ? WHERE id = ?",
             (
                 name,
                 url,
@@ -308,6 +334,7 @@ def update_subscription(
                 int(enabled),
                 check_interval_minutes,
                 _next_check(check_interval_minutes),
+                filters_json,
                 sub_id,
             ),
         )
@@ -337,6 +364,28 @@ def subscription_job_counts(sub_id: int) -> dict[str, tuple[int, int]]:
             (sub_id,),
         ).fetchall()
     return {r[0]: (r[1], r[2]) for r in rows}
+
+
+def add_filtered(
+    sub_id: int, extractor: str, video_id: str, title: str | None, reason: str
+) -> None:
+    """Remember an item the subscription's filters left out, so later checks skip it
+    without looking it up again."""
+    with session() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO filtered"
+            " (subscription_id, extractor, video_id, title, reason, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (sub_id, extractor, video_id, title, reason, utcnow()),
+        )
+
+
+def filtered_keys(sub_id: int) -> set[tuple[str, str]]:
+    with session() as conn:
+        rows = conn.execute(
+            "SELECT extractor, video_id FROM filtered WHERE subscription_id = ?", (sub_id,)
+        ).fetchall()
+    return {(r[0], r[1]) for r in rows}
 
 
 def record_subscription_check(sub_id: int, result: str) -> None:

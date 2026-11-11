@@ -3,6 +3,7 @@ by the frontend's TypeScript types and stored verbatim in presets and job snapsh
 
 import json
 import sqlite3
+from datetime import date
 from typing import Literal
 
 from pydantic import BaseModel
@@ -100,6 +101,7 @@ class ProbeEntry(BaseModel):
     title: str | None = None
     duration: float | None = None
     url: str | None = None
+    live_status: str | None = None  # yt-dlp's word: is_live, was_live, is_upcoming, …
     already_downloaded: bool = False
 
 
@@ -129,12 +131,22 @@ class ArchiveEntryOut(BaseModel):
         return cls(**{k: row[k] for k in cls.model_fields})
 
 
+class SubscriptionFilters(BaseModel):
+    """Which items a subscription leaves out. Nothing set = take everything."""
+
+    after: date | None = None  # only items uploaded on this day or later
+    title: str | None = None  # only items whose title contains this (any case)
+    skip_shorts: bool = False
+    skip_live: bool = False  # live now, announced, and recordings of past streams
+
+
 class SubscriptionIn(BaseModel):
     name: str
     url: str
     preset_id: int | None = None
     enabled: bool = True
     check_interval_minutes: int | None = None  # None = manual checks only
+    filters: SubscriptionFilters = SubscriptionFilters()
 
 
 class SubscriptionOut(SubscriptionIn):
@@ -143,12 +155,14 @@ class SubscriptionOut(SubscriptionIn):
     next_check_at: str | None = None
     last_check_result: str | None = None
     created_at: str
+    filtered_count: int = 0  # items the filters have left out so far
 
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> "SubscriptionOut":
         return cls(
-            **{k: row[k] for k in cls.model_fields if k != "enabled"},
+            **{k: row[k] for k in cls.model_fields if k not in ("enabled", "filters")},
             enabled=bool(row["enabled"]),
+            filters=json.loads(row["filters_json"] or "{}"),
         )
 
 

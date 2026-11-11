@@ -13,6 +13,8 @@ from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadCancelled
 
 from .. import db
+from ..filters import item_key, reject_reason
+from ..models import SubscriptionFilters
 
 PROGRESS_INTERVAL = 0.25  # seconds between job_progress events per job
 
@@ -87,6 +89,7 @@ class JobResult:
     thumbnail: str | None = None  # remote address of the (first) item's picture
     site: str | None = None  # "youtube.com"; yt-dlp's extractor name if it gives no domain
     filesize: int | None = None  # bytes on disk, all files together
+    left_out: int = 0  # items the subscription's filters said no to
 
 
 def run_download_job(
@@ -97,8 +100,10 @@ def run_download_job(
     emit: Callable[[dict], None],
     subscription_id: int | None = None,
     force_download: bool = False,
+    filters: SubscriptionFilters | None = None,
 ) -> JobResult:
     last_emit = 0.0
+    left_out = 0
     files: list[str] = []  # final paths, one per video, via the MoveFiles hook
     title_map: dict[str, str | None] = {}  # archive_id -> title, filled by hooks
     first: dict = {}  # thumbnail and site of the first video seen (a playlist has neither)
@@ -168,6 +173,30 @@ def run_download_job(
         title_map=title_map,
     )
 
+    if filters and subscription_id is not None:
+        # yt-dlp's documented `match_filter` param: asked for every item, a returned
+        # text means "skip it". Called with full details, so this is where the upload
+        # date is finally known. Every "no" is remembered with the subscription.
+        remembered = db.filtered_keys(subscription_id)
+        own_filter = opts.get("match_filter")  # the user's --match-filters, if any
+
+        def match_filter(info: dict, *, incomplete: bool = False) -> str | None:
+            nonlocal left_out
+            key = item_key(info)
+            if key in remembered:
+                reason = "was left out by this subscription's filters before"
+            else:
+                reason = reject_reason(info, filters)
+                if reason and key:
+                    db.add_filtered(subscription_id, *key, info.get("title"), reason)
+                    remembered.add(key)
+            if reason:
+                left_out += 1
+                return reason
+            return own_filter(info, incomplete=incomplete) if own_filter else None
+
+        opts["match_filter"] = match_filter
+
     try:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
@@ -185,6 +214,7 @@ def run_download_job(
             thumbnail=first.get("thumbnail") or info.get("thumbnail"),
             site=first.get("site") or info.get("extractor_key"),
             filesize=sum(os.path.getsize(f) for f in files if os.path.exists(f)) or None,
+            left_out=left_out,
         )
     except DownloadCancelled:
         return JobResult(status="cancelled")
