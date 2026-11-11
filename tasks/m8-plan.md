@@ -65,7 +65,7 @@ Do this first. The new queue (Phase 2) is only useful if statuses are honest.
     `error` with a non-empty message (works offline); a URL already in the archive
     gives `finished` with `skipped == 1`.
 
-- [ ] **1.2 Only accept requests from this machine's own pages**
+- [x] **1.2 Only accept requests from this machine's own pages**
   - Where: one small ASGI middleware in `yoink/app.py`, applied to HTTP and WebSocket.
   - Rule: the `Host` name must be `127.0.0.1` or `localhost`; if an `Origin` header is
     present, its host name must be too. Any port (keeps the Vite dev server on :5173
