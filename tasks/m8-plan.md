@@ -115,6 +115,8 @@ Do this first. The new queue (Phase 2) is only useful if statuses are honest.
   - New `.github/workflows/ci.yml`: `ruff check`, `pytest`, `npm ci && npm run build`
     (which runs `tsc`).
   - Done when: the workflow is green on the branch.
+  - Status 2026-11-11: workflow written and the same commands pass locally. Not yet
+    pushed, so not yet seen green on GitHub — tick this after the first push.
 
 ---
 
