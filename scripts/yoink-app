@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Desktop launcher: start the yoink server (if not already running), open a
-# dedicated browser app-window, and — if we started the server — shut it down
-# cleanly when the window closes. No hanging servers, no locked databases.
+# dedicated browser app-window (or, without a Chromium-family browser, a tab in
+# the default browser), and — if we started the server — shut it down cleanly
+# when the window closes. No hanging servers, no locked databases.
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
@@ -52,6 +53,26 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+# Pick the window first: it decides how the server learns that it was closed.
+# A Chromium-family browser gives a dedicated app window with its own process
+# that this script waits on. Any other browser only gets a normal tab, and its
+# command returns at once; there the server itself watches for its last tab
+# closing (--exit-when-closed).
+CHROMIUM=""
+if [ -z "${YOINK_BROWSER:-}" ]; then
+    for c in chromium-browser chromium google-chrome google-chrome-stable brave-browser; do
+        CHROMIUM=$(command -v "$c" || true)
+        [ -n "$CHROMIUM" ] && break
+    done
+fi
+OPEN_TAB="${YOINK_BROWSER:-xdg-open}"  # e.g. YOINK_BROWSER="firefox --new-window"
+SERVER_ARGS=()
+if [ -z "$CHROMIUM" ]; then
+    command -v "${OPEN_TAB%% *}" >/dev/null 2>&1 \
+        || fail "cannot open a browser: '${OPEN_TAB%% *}' not found"
+    SERVER_ARGS=(--exit-when-closed)
+fi
+
 if ! server_up; then
     # Resolve the server binary: env override, then dev checkout, then the
     # system-installed entry point (RPM layout).
@@ -77,7 +98,7 @@ if ! server_up; then
         SERVER_BIN=$(command -v yoink || true)
         [ -z "$SERVER_BIN" ] && fail "yoink is not installed (no 'yoink' on PATH)"
     fi
-    "$SERVER_BIN" --port "$PORT" >> "$LOG_DIR/server.log" 2>&1 &
+    "$SERVER_BIN" --port "$PORT" "${SERVER_ARGS[@]}" >> "$LOG_DIR/server.log" 2>&1 &
     SERVER_PID=$!
     for _ in $(seq 1 100); do
         server_up && break
@@ -89,30 +110,25 @@ if ! server_up; then
     server_up || fail "server did not become ready — see $LOG_DIR/server.log"
 fi
 
-# Any Chromium-family browser will do: all of these support --app and
-# --user-data-dir, which is what the window-close shutdown relies on.
-CHROMIUM=""
-for c in chromium-browser chromium google-chrome google-chrome-stable brave-browser; do
-    CHROMIUM=$(command -v "$c" || true)
-    [ -n "$CHROMIUM" ] && break
-done
-[ -n "$CHROMIUM" ] || [ -n "${YOINK_BROWSER:-}" ] \
-    || fail "no Chromium, Chrome or Brave found (install one, or set YOINK_BROWSER to use another browser)"
-
-# Dedicated app window. The private user-data-dir gives yoink its own browser
-# process we can wait on; a second launch of this script joins that process,
-# exits immediately, and leaves the first launcher owning the server. The
-# browser runs in the background and is wait-ed on so signals (logout, kill)
-# interrupt immediately instead of being deferred until the window closes.
-if [ -n "${YOINK_BROWSER:-}" ]; then
-    # e.g. YOINK_BROWSER="firefox --new-window" (note: no auto-shutdown if the
-    # browser command returns before the window closes)
-    $YOINK_BROWSER "$URL" &
+if [ -z "$CHROMIUM" ]; then
+    # A tab in a normal browser. The browser is the user's own, so it is never
+    # waited on or closed from here. If this script started the server, it stays
+    # until the server has stopped itself (last tab closed), so that a logout or
+    # kill of the launcher still takes the server down with it.
+    $OPEN_TAB "$URL" >/dev/null 2>&1 &
+    if [ -n "$SERVER_PID" ]; then
+        wait "$SERVER_PID" || true
+    fi
 else
+    # Dedicated app window. The private user-data-dir gives yoink its own browser
+    # process we can wait on; a second launch of this script joins that process,
+    # exits immediately, and leaves the first launcher owning the server. The
+    # browser runs in the background and is wait-ed on so signals (logout, kill)
+    # interrupt immediately instead of being deferred until the window closes.
     "$CHROMIUM" --app="$URL" \
         --user-data-dir="$DATA_DIR/browser-profile" \
         --no-first-run --no-default-browser-check \
         >/dev/null 2>&1 &
+    BROWSER_PID=$!
+    wait "$BROWSER_PID" || true
 fi
-BROWSER_PID=$!
-wait "$BROWSER_PID" || true

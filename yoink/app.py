@@ -76,7 +76,7 @@ class SPAStaticFiles(StaticFiles):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init(config.db_path())
-    app.state.broadcaster = Broadcaster()
+    app.state.broadcaster = Broadcaster(exit_when_closed=config.exit_when_closed())
     app.state.vault = Vault(config.vault_path())
     if db.get_setting("vault_keyring") == "1" and app.state.vault.state == "locked":
         # opted in under Settings; before the leftover jobs start, they may need it
