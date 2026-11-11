@@ -135,21 +135,13 @@ export function OptionsForm({ value, onChange, heights }: Props) {
           />
           Embed thumbnail
         </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={value.write_subtitles}
-            onChange={(e) => set('write_subtitles', e.target.checked)}
-          />
-          Subtitles
-        </label>
-        <label title="Skip the already-downloaded check for this download">
+        <label title="Normally a video you already downloaded is skipped">
           <input
             type="checkbox"
             checked={value.force_download}
             onChange={(e) => set('force_download', e.target.checked)}
           />
-          Re-download if in archive
+          Download again if already downloaded
         </label>
       </div>
 
@@ -158,10 +150,18 @@ export function OptionsForm({ value, onChange, heights }: Props) {
           <label>
             <input
               type="checkbox"
+              checked={value.write_subtitles}
+              onChange={(e) => set('write_subtitles', e.target.checked)}
+            />
+            Download subtitles
+          </label>
+          <label>
+            <input
+              type="checkbox"
               checked={value.write_auto_subs}
               onChange={(e) => set('write_auto_subs', e.target.checked)}
             />
-            Include auto-generated
+            Also auto-generated ones
           </label>
           <label>
             <input
@@ -169,7 +169,7 @@ export function OptionsForm({ value, onChange, heights }: Props) {
               checked={value.embed_subtitles}
               onChange={(e) => set('embed_subtitles', e.target.checked)}
             />
-            Embed into file
+            Put them inside the video file
           </label>
         </div>
         <div className="row">

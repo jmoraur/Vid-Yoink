@@ -48,8 +48,14 @@ nav {
   }
 
   nav a {
-    flex: 1;
+    flex: 1 1 auto;
     justify-content: center;
+    padding-inline: 0.5rem;
+  }
+
+  /* three words fit a phone; three words plus three icons do not */
+  nav a svg {
+    display: none;
   }
 }
 

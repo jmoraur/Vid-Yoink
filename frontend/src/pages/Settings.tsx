@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
+import { ConfirmDelete } from '../components/ui/ConfirmDelete'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Icon } from '../components/ui/Icon'
 import { Skeleton } from '../components/ui/Skeleton'
@@ -93,11 +94,9 @@ function CredentialsEditor({ credentials }: { credentials: string[] }) {
     <div className="vault-block">
       <h3>Site logins</h3>
       {credentials.map((l) => (
-        <div className="row" key={l}>
-          <span className="grow">{l}</span>
-          <button className="small" onClick={() => remove.mutate(l)}>
-            Delete
-          </button>
+        <div className="stored-entry" key={l}>
+          <span>{l}</span>
+          <ConfirmDelete what={`login ${l}`} onConfirm={() => remove.mutate(l)} />
         </div>
       ))}
       {credentials.length === 0 && <p className="muted">None stored.</p>}
@@ -151,11 +150,9 @@ function CookiesEditor({ cookies }: { cookies: string[] }) {
         doesn't work (like YouTube).
       </p>
       {cookies.map((l) => (
-        <div className="row" key={l}>
-          <span className="grow">{l}</span>
-          <button className="small" onClick={() => remove.mutate(l)}>
-            Delete
-          </button>
+        <div className="stored-entry" key={l}>
+          <span>{l}</span>
+          <ConfirmDelete what={`cookies ${l}`} onConfirm={() => remove.mutate(l)} />
         </div>
       ))}
       {cookies.length === 0 && <p className="muted">None stored.</p>}
@@ -257,10 +254,14 @@ function GeneralSettings() {
     <div className="options-form settings-card">
       <h2>General</h2>
       {!settings.data.ffmpeg_available && (
-        <p className="error">
-          ffmpeg was not found on this system — merging video+audio, audio extraction and
-          embedding will fail. Install it (on Fedora: RPM Fusion's ffmpeg).
-        </p>
+        <div className="banner" role="status">
+          <Icon name="alert" />
+          <span>
+            ffmpeg is not installed. Without it, joining video and sound, making audio
+            files and embedding thumbnails will fail. On Fedora, install ffmpeg from RPM
+            Fusion.
+          </span>
+        </div>
       )}
       {settings.data.yt_dlp_outdated && (
         <div className="banner" role="status">
@@ -294,14 +295,32 @@ function GeneralSettings() {
           Save
         </button>
       </div>
-      <p className="hint">
-        Parallel download changes apply after a restart. yt-dlp {settings.data.yt_dlp_version}
-        {' · '}ffmpeg {settings.data.ffmpeg_available ? 'found' : 'missing'}
-      </p>
+      <p className="hint">A new number of parallel downloads applies after a restart.</p>
       {save.isError && <p className="error">{save.error.message}</p>}
+      <dl className="facts">
+        <dt>yt-dlp</dt>
+        <dd>
+          <span className="font-mono">{settings.data.yt_dlp_version}</span>
+          {settings.data.yt_dlp_outdated ? (
+            <span className="state status-cancelled">over 90 days old</span>
+          ) : (
+            <span className="state status-finished">up to date</span>
+          )}
+        </dd>
+        <dt>ffmpeg</dt>
+        <dd>
+          {settings.data.ffmpeg_available ? (
+            <span className="state status-finished">found</span>
+          ) : (
+            <span className="state status-error">missing</span>
+          )}
+        </dd>
+      </dl>
     </div>
   )
 }
+
+const VAULT_WORDS = { uninitialized: 'not set up', locked: 'locked', unlocked: 'unlocked' }
 
 export function Settings() {
   const vault = useQuery({ queryKey: ['vault'], queryFn: api.vaultStatus })
@@ -333,7 +352,7 @@ export function Settings() {
               }`}
             >
               <Icon name={vault.data.state === 'unlocked' ? 'unlock' : 'lock'} size={12} />
-              {vault.data.state}
+              {VAULT_WORDS[vault.data.state]}
             </span>
           )}
         </div>

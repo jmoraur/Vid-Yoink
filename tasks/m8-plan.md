@@ -196,7 +196,7 @@ Target main screen:
   - Jobs without a title show the site and the last part of the address, not the full
     URL.
 
-- [ ] **2.6 Form polish**
+- [x] **2.6 Form polish**
   - Inputs: white surface with a border (grey fill only when really disabled).
   - Primary button: full colour when usable, clearly greyed only when not.
   - Remove the duplicate "Subtitles" control in `OptionsForm.tsx`.

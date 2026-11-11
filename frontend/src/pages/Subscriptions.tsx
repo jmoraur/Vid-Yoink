@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, NavLink, Route, Routes } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Subscription, SubscriptionIn } from '../api/types'
+import { ConfirmDelete } from '../components/ui/ConfirmDelete'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Icon } from '../components/ui/Icon'
@@ -162,9 +163,7 @@ function SubscriptionRow({ sub }: { sub: Subscription }) {
           <button className="small" onClick={() => setEditing(true)}>
             Edit
           </button>
-          <button className="danger-ghost" onClick={() => remove.mutate()}>
-            Delete
-          </button>
+          <ConfirmDelete what={`subscription ${sub.name}`} onConfirm={() => remove.mutate()} />
         </span>
       </div>
       <p className="job-facts">

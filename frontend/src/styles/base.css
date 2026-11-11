@@ -77,10 +77,6 @@ button:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
 
 button.small,
 button.ghost {
@@ -122,19 +118,42 @@ button.danger-ghost:hover:not(:disabled) {
   border-color: var(--danger);
 }
 
-/* --- inputs --- */
+/* Not usable = plainly grey, whatever kind of button it is. */
+button:disabled {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text-faint);
+  cursor: default;
+}
+
+button.small:disabled,
+button.ghost:disabled,
+button.ghost-icon:disabled,
+button.danger-ghost:disabled {
+  background: transparent;
+}
+
+/* --- inputs: a white field with a border; grey only when disabled --- */
 
 input,
 select,
 textarea {
   padding: 0.45rem 0.6rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--r-s);
-  background: var(--surface-2);
+  background: var(--surface);
   color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--fs-sm);
   transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text-faint);
 }
 
 input:focus,

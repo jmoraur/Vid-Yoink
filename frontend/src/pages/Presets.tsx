@@ -4,6 +4,7 @@ import { api } from '../api/client'
 import { DEFAULT_OPTIONS, type DownloadOptions, type Preset } from '../api/types'
 import { OptionsForm } from '../components/options/OptionsForm'
 import { summarize } from '../components/options/summarize'
+import { ConfirmDelete } from '../components/ui/ConfirmDelete'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Icon } from '../components/ui/Icon'
@@ -96,9 +97,7 @@ export function Presets() {
                   <button className="small" onClick={() => setEditing(p)}>
                     Edit
                   </button>
-                  <button className="danger-ghost" onClick={() => remove.mutate(p.id)}>
-                    Delete
-                  </button>
+                  <ConfirmDelete what={`preset ${p.name}`} onConfirm={() => remove.mutate(p.id)} />
                 </span>
               </div>
               <p className="muted">{summarize(p.options)}</p>

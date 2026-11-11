@@ -52,7 +52,6 @@
   min-width: 0;
   padding: 0.7rem 0.9rem;
   font-size: var(--fs-base);
-  background: var(--surface);
   font-family: var(--font-mono);
 }
 
@@ -273,25 +272,27 @@ button.link:hover:not(:disabled) {
   font-size: var(--fs-sm);
 }
 
-.job-facts > * + *::before {
+/* the dot trails its item, so a wrapped line never starts with one */
+.job-facts > *:not(:last-child)::after {
   content: '·';
-  margin-right: 0.45rem;
+  margin-left: 0.45rem;
   color: var(--text-faint);
+  font-weight: 400;
 }
 
 /* the state: a coloured dot and a word (never colour alone) */
 .state {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
   color: var(--_c);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .state::before {
   content: '';
+  display: inline-block;
   width: 0.5rem;
   height: 0.5rem;
+  margin-right: 0.4rem;
   border-radius: 50%;
   background: var(--_c);
 }
@@ -663,10 +664,57 @@ button.link:hover:not(:disabled) {
 .search-wrap .search {
   width: 100%;
   padding: 0.5rem 0.7rem 0.5rem 2.2rem;
-  background: var(--surface);
 }
 
 /* --- vault & settings --- */
+
+/* inline "Delete?  No  Yes" */
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.confirm button:first-of-type {
+  margin-left: var(--sp-1);
+}
+
+/* label / value rows, e.g. the tool versions in Settings */
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--sp-1) var(--sp-4);
+  margin: var(--sp-4) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-sm);
+}
+
+.facts dt {
+  color: var(--text-muted);
+}
+
+.facts dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+}
+
+.stored-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 2.2rem;
+  font-size: var(--fs-sm);
+}
+
+.stored-entry > :first-child {
+  flex: 1;
+}
 
 .settings-card {
   margin-bottom: var(--sp-4);
@@ -776,6 +824,16 @@ button.link:hover:not(:disabled) {
 
   .thumb {
     width: 72px;
+  }
+
+  /* list rows without a picture: name on its own line, buttons under it */
+  .job:not(.media) .job-title {
+    flex-basis: 100%;
+    white-space: normal;
+  }
+
+  .job:not(.media) .job-actions {
+    margin-left: 0;
   }
 
   .download-form {
