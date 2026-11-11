@@ -90,9 +90,8 @@ Full findings, steps and done-checks: [m8-plan.md](m8-plan.md).
 
 - yt-dlp warns about a missing JavaScript runtime for YouTube ("some formats may be
   missing") — installing deno fixes it; mention in README (M6).
-- Probe/subscription checks cap at the first 500 playlist entries (documented limitation;
-  fine for channels where new items appear first, can miss appends past 500 on huge
-  regular playlists).
+- The interactive probe caps at the first 500 playlist entries; subscription checks and
+  seeding read up to 5000 (M8 1.6).
 
 ## Review
 

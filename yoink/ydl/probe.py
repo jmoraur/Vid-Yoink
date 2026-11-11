@@ -5,7 +5,10 @@ from yt_dlp import YoutubeDL
 
 from ..models import ProbeEntry, ProbeResult
 
-MAX_ENTRIES = 500  # bound payload and pagination work on huge playlists/channels
+# How many playlist entries to read. The preview in the UI stays small and fast;
+# subscription checks and seeding read (nearly) everything so nothing is missed.
+PREVIEW_LIMIT = 500
+CHECK_LIMIT = 5000
 
 PROBE_OPTS = {
     "extract_flat": "in_playlist",
@@ -13,12 +16,11 @@ PROBE_OPTS = {
     "quiet": True,
     "noprogress": True,
     "socket_timeout": 20,
-    "playlistend": MAX_ENTRIES,
 }
 
 
-def probe_url(url: str, archive_keys: set[str]) -> ProbeResult:
-    with YoutubeDL(dict(PROBE_OPTS)) as ydl:
+def probe_url(url: str, archive_keys: set[str], limit: int = PREVIEW_LIMIT) -> ProbeResult:
+    with YoutubeDL({**PROBE_OPTS, "playlistend": limit}) as ydl:
         info = ydl.extract_info(url, download=False)
     return _to_result(info or {}, archive_keys)
 

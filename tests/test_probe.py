@@ -1,3 +1,4 @@
+from yoink.ydl import probe
 from yoink.ydl.probe import _to_result
 
 
@@ -32,3 +33,25 @@ def test_video_conversion_heights():
     result = _to_result(info, archive_keys=set())
     assert result.kind == "video"
     assert result.heights == [1080, 720]
+
+
+def test_entry_limit_is_passed_to_ytdlp(monkeypatch):
+    seen = []
+
+    class FakeYDL:
+        def __init__(self, params):
+            seen.append(params["playlistend"])
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            pass
+
+        def extract_info(self, url, download):
+            return {"title": "x"}
+
+    monkeypatch.setattr(probe, "YoutubeDL", FakeYDL)
+    probe.probe_url("https://x", set())
+    probe.probe_url("https://x", set(), probe.CHECK_LIMIT)
+    assert seen == [probe.PREVIEW_LIMIT, probe.CHECK_LIMIT] == [500, 5000]

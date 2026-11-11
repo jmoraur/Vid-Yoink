@@ -96,9 +96,8 @@ tag `v<version>` and push — CI builds the RPM and attaches it to the GitHub re
 - Cancelling takes effect between download chunks; metadata extraction and an in-flight
   ffmpeg post-processing step can't be interrupted — the job shows "cancelling…" until it
   settles. Partial `.part` files are kept and resumed on retry.
-- Playlist probing and subscription checks read the first 500 entries. For channels
-  (newest first) this is fine; on huge regular playlists, items appended past 500 are
-  missed.
+- The playlist preview on the download page shows the first 500 entries. Subscription
+  checks read up to 5000, so only truly enormous playlists can have items missed.
 - Changing "Parallel downloads" in Settings takes effect after a restart.
 - If you forget the vault master password, the vault contents are unrecoverable (that's
   the point) — delete `~/.local/share/yoink/vault.json` and start over.

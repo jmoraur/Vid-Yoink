@@ -100,7 +100,7 @@ Do this first. The new queue (Phase 2) is only useful if statuses are honest.
   - Done when: launching from the app menu on this machine opens the window, and
     closing it stops the server (port 8090 free, no `yoink` process).
 
-- [ ] **1.6 Subscription checks read the whole list**
+- [x] **1.6 Subscription checks read the whole list**
   - Where: `yoink/ydl/probe.py` — let the caller pass the limit; keep 500 for the
     interactive preview, use 5000 for checks and seeding.
   - Done when: `tests/test_probe.py` covers the parameter; README limitation updated.

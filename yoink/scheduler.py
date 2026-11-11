@@ -8,7 +8,7 @@ from . import db
 from .jobs import JobManager
 from .models import DownloadOptions
 from .ws import Broadcaster
-from .ydl.probe import probe_url
+from .ydl.probe import CHECK_LIMIT, probe_url
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +54,9 @@ async def check_subscription(
         failing = 0
         error: str | None = None
         try:
-            probe = await asyncio.to_thread(probe_url, row["url"], db.archive_keys())
+            probe = await asyncio.to_thread(
+                probe_url, row["url"], db.archive_keys(), CHECK_LIMIT
+            )
             options_json = _subscription_options_json(row)
             counts = db.subscription_job_counts(sub_id)
             for entry in probe.entries:
@@ -96,7 +98,7 @@ async def seed_subscription(sub_id: int) -> int:
     row = db.get_subscription(sub_id)
     if row is None:
         raise ValueError("no such subscription")
-    probe = await asyncio.to_thread(probe_url, row["url"], set())
+    probe = await asyncio.to_thread(probe_url, row["url"], set(), CHECK_LIMIT)
     count = 0
     for entry in probe.entries:
         if entry.id and entry.ie_key:

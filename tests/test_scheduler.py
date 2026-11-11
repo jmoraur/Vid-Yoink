@@ -19,10 +19,15 @@ class FakeManager:
 def sub_id(tmp_path, monkeypatch):
     db.init(tmp_path / "test.db")
     entries = [ProbeEntry(id=i, ie_key="Youtube", url=f"https://x/{i}") for i in ("a", "b")]
-    monkeypatch.setattr(
-        scheduler, "probe_url", lambda url, keys: ProbeResult(kind="playlist", entries=entries)
-    )
-    return db.create_subscription("sub", "https://x/list", None, True, None)
+    limits = []
+
+    def fake_probe(url, keys, limit):
+        limits.append(limit)
+        return ProbeResult(kind="playlist", entries=entries)
+
+    monkeypatch.setattr(scheduler, "probe_url", fake_probe)
+    yield db.create_subscription("sub", "https://x/list", None, True, None)
+    assert set(limits) == {scheduler.CHECK_LIMIT}  # checks read the whole list
 
 
 def check(sub_id, manager):
