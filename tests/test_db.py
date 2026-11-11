@@ -22,11 +22,15 @@ def test_job_lifecycle():
     assert "a.mp4" in row["files_json"]
 
 
-def test_interrupted_jobs_marked_on_init(tmp_path):
-    job_id = db.create_job("https://example.com/v", "{}")
-    db.mark_job_running(job_id)
+def test_unfinished_jobs_are_queued_again_on_init(tmp_path):
+    waiting = db.create_job("https://example.com/a", "{}")
+    killed = db.create_job("https://example.com/b", "{}")
+    db.mark_job_running(killed)
+    done = db.create_job("https://example.com/c", "{}")
+    db.finish_job(done, "cancelled")
     db.init(tmp_path / "test.db")  # simulate app restart on same file
-    assert db.get_job(job_id)["status"] == "error"
+    assert db.queued_job_ids() == [waiting, killed]
+    assert db.get_job(done)["status"] == "cancelled"
 
 
 def test_preset_crud():

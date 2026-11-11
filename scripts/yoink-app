@@ -38,8 +38,8 @@ cleanup() {
         kill -TERM "$BROWSER_PID" 2>/dev/null || true
     fi
     # Only stop the server if this launcher started it. TERM triggers uvicorn's
-    # graceful shutdown: running downloads are cancelled (partial files are kept
-    # and resumable) and every job reaches a terminal state in the database.
+    # graceful shutdown: running downloads stop (partial files are kept) and go
+    # back to 'queued' in the database, so the next launch carries on with them.
     if [ -n "$SERVER_PID" ] && kill -0 "$SERVER_PID" 2>/dev/null; then
         kill -TERM "$SERVER_PID" 2>/dev/null || true
         for _ in $(seq 1 150); do  # up to 30s: covers the job-cancel window

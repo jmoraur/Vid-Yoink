@@ -81,7 +81,7 @@ Do this first. The new queue (Phase 2) is only useful if statuses are honest.
   - Done when: `tests/test_scheduler.py` — two checks in a row (probe faked) create
     jobs once; an item with 3 failed jobs is not queued a 4th time.
 
-- [ ] **1.4 The queue survives closing the app**
+- [x] **1.4 The queue survives closing the app**
   - Where: `yoink/jobs.py` (`shutdown`, `_run`), `yoink/db.py:83`, `yoink/app.py`
     lifespan.
   - How: during shutdown, a job that stops because of the shutdown goes back to

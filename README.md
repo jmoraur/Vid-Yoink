@@ -47,8 +47,9 @@ some YouTube formats may be missing (yt-dlp prints a warning).
 
 Launch **Yoink** from the application menu (or run `yoink-app`). This starts the server,
 opens a dedicated app window, and when you close that window it shuts the server down
-cleanly: running downloads are cancelled within seconds (partial files kept, resumable
-via Retry), the port is released, and nothing keeps running in the background. Launching
+cleanly: running downloads stop within seconds (partial files kept), the port is
+released, and nothing keeps running in the background. Unfinished downloads stay in the
+queue and carry on from where they stopped the next time you open the app. Launching
 a second time while a window is open just adds a window to the same instance.
 
 Or run the bare server: `yoink` (serves http://127.0.0.1:8090, Ctrl+C to stop), with

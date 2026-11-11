@@ -79,11 +79,10 @@ def init(db_path: Path) -> None:
         if version < 1:
             conn.executescript(SCHEMA)
             conn.execute("PRAGMA user_version = 1")
-        # Jobs from a previous process can never resume; surface them as errors.
+        # A previous process that was killed mid-download leaves 'running' rows.
+        # Put them back in line; the app queues every 'queued' row again at start.
         conn.execute(
-            "UPDATE jobs SET status = 'error', error = 'interrupted by app shutdown',"
-            " finished_at = ? WHERE status IN ('queued', 'running')",
-            (utcnow(),),
+            "UPDATE jobs SET status = 'queued', started_at = NULL WHERE status = 'running'"
         )
 
 
@@ -143,6 +142,19 @@ def mark_job_running(job_id: int) -> None:
             "UPDATE jobs SET status = 'running', started_at = ? WHERE id = ?",
             (utcnow(), job_id),
         )
+
+
+def requeue_job(job_id: int) -> None:
+    with session() as conn:
+        conn.execute(
+            "UPDATE jobs SET status = 'queued', started_at = NULL WHERE id = ?", (job_id,)
+        )
+
+
+def queued_job_ids() -> list[int]:
+    with session() as conn:
+        rows = conn.execute("SELECT id FROM jobs WHERE status = 'queued' ORDER BY id")
+        return [r[0] for r in rows]
 
 
 def finish_job(

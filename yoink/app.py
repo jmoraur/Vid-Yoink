@@ -82,6 +82,8 @@ async def lifespan(app: FastAPI):
     app.state.jobs = JobManager(
         app.state.broadcaster, app.state.vault, max_concurrent=max_concurrent
     )
+    for job_id in db.queued_job_ids():  # left over from the last run: carry on
+        app.state.jobs.enqueue(job_id)
     scheduler_task = asyncio.create_task(
         scheduler_loop(app.state.jobs, app.state.broadcaster)
     )

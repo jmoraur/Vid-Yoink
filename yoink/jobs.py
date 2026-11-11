@@ -24,6 +24,8 @@ class JobManager:
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._cancel_events: dict[int, threading.Event] = {}
         self._tasks: set[asyncio.Task] = set()
+        self._user_cancelled: set[int] = set()
+        self._shutting_down = False
         self.live_progress: dict[int, dict] = {}
 
     def enqueue(self, job_id: int) -> None:
@@ -33,10 +35,12 @@ class JobManager:
         task.add_done_callback(self._tasks.discard)
 
     async def shutdown(self, timeout: float = 20.0) -> None:
-        """Cancel every queued/running download and wait for the workers to settle,
-        so process exit is not blocked by yt-dlp threads and all jobs reach a
-        terminal state in the DB. Jobs still stuck after the timeout (e.g. inside a
-        non-interruptible ffmpeg step) get marked interrupted on next startup."""
+        """Stop every download and wait for the workers to settle, so process exit
+        is not blocked by yt-dlp threads. Jobs stopped this way go back to 'queued'
+        (partial files are kept) and start again on the next launch; only jobs the
+        user cancelled end as 'cancelled'. A job still stuck after the timeout (e.g.
+        inside a non-interruptible ffmpeg step) is re-queued by db.init()."""
+        self._shutting_down = True
         for event in self._cancel_events.values():
             event.set()
         if self._tasks:
@@ -48,6 +52,7 @@ class JobManager:
         event = self._cancel_events.get(job_id)
         if event is None:
             return False
+        self._user_cancelled.add(job_id)
         event.set()
         self._publish_status(job_id, "cancelling")
         return True
@@ -57,6 +62,8 @@ class JobManager:
             cancel_event = self._cancel_events[job_id]
             try:
                 if cancel_event.is_set():  # cancelled while still queued
+                    if self._stopped_by_shutdown(job_id):
+                        return  # row stays 'queued'
                     db.finish_job(job_id, "cancelled")
                     self._publish_status(job_id, "cancelled")
                     return
@@ -87,6 +94,9 @@ class JobManager:
                     )
                 except Exception as exc:  # runner handles expected errors; this is a backstop
                     result = JobResult(status="error", error=f"internal error: {exc!r}")
+                if result.status == "cancelled" and self._stopped_by_shutdown(job_id):
+                    db.requeue_job(job_id)
+                    return
                 db.finish_job(
                     job_id, result.status,
                     files=result.files, error=result.error, title=result.title,
@@ -94,7 +104,11 @@ class JobManager:
                 self._publish_status(job_id, result.status)
             finally:
                 self._cancel_events.pop(job_id, None)
+                self._user_cancelled.discard(job_id)
                 self.live_progress.pop(job_id, None)
+
+    def _stopped_by_shutdown(self, job_id: int) -> bool:
+        return self._shutting_down and job_id not in self._user_cancelled
 
     def _emit_threadsafe(self, event: dict) -> None:
         """Only entry point for worker threads."""
