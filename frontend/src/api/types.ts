@@ -162,6 +162,8 @@ export interface VaultStatus {
 export interface AppSettings {
   default_output_dir: string
   max_concurrent: number
+  notifications: boolean
+  notify_available: boolean // notify-send is installed
   ffmpeg_available: boolean
   yt_dlp_version: string
   yt_dlp_outdated: boolean

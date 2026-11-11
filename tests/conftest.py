@@ -10,3 +10,12 @@ def client(tmp_path, monkeypatch):
 
     with TestClient(create_app(), base_url="http://127.0.0.1:8090") as c:
         yield c
+
+
+@pytest.fixture(autouse=True)
+def notifications(monkeypatch):
+    """No test may pop up a real desktop notification; they are collected here."""
+    sent = []
+    monkeypatch.setattr("yoink.notify.which", lambda name: "/usr/bin/notify-send")
+    monkeypatch.setattr("yoink.notify.Popen", lambda argv, **kw: sent.append(argv))
+    return sent

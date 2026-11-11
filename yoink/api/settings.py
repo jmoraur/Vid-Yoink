@@ -25,6 +25,7 @@ def is_outdated(version: str, today: date | None = None) -> bool:
 class SettingsIn(BaseModel):
     default_output_dir: str | None = None
     max_concurrent: int | None = None
+    notifications: bool | None = None
 
 
 @router.get("/settings")
@@ -33,6 +34,8 @@ async def get_settings() -> dict:
         "default_output_dir": db.get_setting("default_output_dir")
         or str(config.default_download_dir()),
         "max_concurrent": int(db.get_setting("max_concurrent") or 2),
+        "notifications": db.get_setting("notifications") != "0",
+        "notify_available": shutil.which("notify-send") is not None,
         "ffmpeg_available": shutil.which("ffmpeg") is not None,
         "yt_dlp_version": yt_dlp.version.__version__,
         "yt_dlp_outdated": is_outdated(yt_dlp.version.__version__),
@@ -45,4 +48,6 @@ async def put_settings(body: SettingsIn) -> dict:
         db.set_setting("default_output_dir", body.default_output_dir)
     if body.max_concurrent is not None:
         db.set_setting("max_concurrent", str(max(1, min(body.max_concurrent, 10))))
+    if body.notifications is not None:
+        db.set_setting("notifications", str(int(body.notifications)))
     return await get_settings()

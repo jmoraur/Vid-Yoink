@@ -232,6 +232,10 @@ function GeneralSettings() {
       queryClient.invalidateQueries({ queryKey: ['settings'] })
     },
   })
+  const notifications = useMutation({
+    mutationFn: (on: boolean) => api.putSettings({ notifications: on }),
+    onSuccess: (data) => queryClient.setQueryData(['settings'], data),
+  })
   if (settings.isPending) {
     return (
       <div className="options-form settings-card">
@@ -297,6 +301,20 @@ function GeneralSettings() {
       </div>
       <p className="hint">A new number of parallel downloads applies after a restart.</p>
       {save.isError && <p className="error">{save.error.message}</p>}
+      <div className="row checks">
+        <label>
+          <input
+            type="checkbox"
+            checked={settings.data.notifications && settings.data.notify_available}
+            disabled={!settings.data.notify_available || notifications.isPending}
+            onChange={(e) => notifications.mutate(e.target.checked)}
+          />
+          Show a desktop notification when a download finishes or fails
+        </label>
+      </div>
+      {!settings.data.notify_available && (
+        <p className="hint">Notifications need notify-send (package libnotify).</p>
+      )}
       <dl className="facts">
         <dt>yt-dlp</dt>
         <dd>

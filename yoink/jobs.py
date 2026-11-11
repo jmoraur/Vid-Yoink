@@ -4,7 +4,7 @@
 import asyncio
 import threading
 
-from . import db
+from . import db, notify
 from .models import DownloadOptions
 from .vault import Vault, VaultError, resolve_secrets
 from .ws import Broadcaster
@@ -78,6 +78,7 @@ class JobManager:
                 except VaultError as exc:
                     db.finish_job(job_id, "error", error=str(exc))
                     self._publish_status(job_id, "error")
+                    notify.job_done(job_id)
                     return
                 db.mark_job_running(job_id)
                 self._publish_status(job_id, "running")
@@ -104,6 +105,7 @@ class JobManager:
                     filesize=result.filesize, skipped=result.skipped,
                 )
                 self._publish_status(job_id, result.status)
+                notify.job_done(job_id)
             finally:
                 self._cancel_events.pop(job_id, None)
                 self._user_cancelled.discard(job_id)

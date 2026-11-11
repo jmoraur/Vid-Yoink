@@ -108,7 +108,7 @@ export const api = {
     }),
 
   getSettings: () => request<AppSettings>('/api/settings'),
-  putSettings: (settings: Partial<Pick<AppSettings, 'default_output_dir' | 'max_concurrent'>>) =>
+  putSettings: (settings: Partial<Pick<AppSettings, 'default_output_dir' | 'max_concurrent' | 'notifications'>>) =>
     request<AppSettings>('/api/settings', { method: 'PUT', body: JSON.stringify(settings) }),
 
   probe: (url: string) =>
