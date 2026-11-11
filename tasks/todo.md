@@ -75,8 +75,7 @@ any web page can reach the local server), a launcher that only finds Chromium, w
 spots in subscriptions, and an interface that needed a new layout more than new paint.
 Full findings, steps and done-checks: [m8-plan.md](m8-plan.md).
 
-- [x] Phase 1 — correctness and safety (steps 1.1–1.7 done and verified; 1.8 CI workflow
-      written and passing locally, not yet run on GitHub — needs a push)
+- [x] Phase 1 — correctness and safety (steps 1.1–1.8; CI green on the pushed branch)
 - [x] Phase 2 — interface rework (steps 2.1–2.7; version 0.2.0)
 - [ ] Phase 3 — new features (optional, pick per item)
 

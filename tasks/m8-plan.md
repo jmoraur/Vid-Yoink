@@ -3,7 +3,7 @@
 Written 2026-11-11 after a fresh-eyes review of the whole project (backend read in
 full, app run with sample data, every page viewed in light, dark and phone width).
 Phases 1 and 2 were built on 2026-11-11 (branch `m8-fixes-and-redesign`, one commit per
-step). Open: 1.8 needs a push to be seen green on GitHub; Phase 3 is not started.
+step) and pushed; CI is green. Open: Phase 3 is not started.
 
 **How to resume:** start at the first unchecked box. Each step lists where to change
 the code and how to know it is done.
@@ -112,12 +112,11 @@ Do this first. The new queue (Phase 2) is only useful if statuses are honest.
     (`yoink/api/settings.py` adds `yt_dlp_outdated`).
   - Done when: the warning shows with a faked old version and not with the current one.
 
-- [ ] **1.8 CI on every push**
+- [x] **1.8 CI on every push**
   - New `.github/workflows/ci.yml`: `ruff check`, `pytest`, `npm ci && npm run build`
     (which runs `tsc`).
   - Done when: the workflow is green on the branch.
-  - Status 2026-11-11: workflow written and the same commands pass locally. Not yet
-    pushed, so not yet seen green on GitHub — tick this after the first push.
+  - Done 2026-11-11: branch pushed, first run green (backend and frontend jobs).
 
 ---
 
