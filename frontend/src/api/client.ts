@@ -83,6 +83,11 @@ export const api = {
       body: JSON.stringify({ password }),
     }),
   vaultLock: () => request<VaultStatus>('/api/vault/lock', { method: 'POST' }),
+  vaultKeyring: (enabled: boolean) =>
+    request<VaultStatus>('/api/vault/keyring', {
+      method: 'PUT',
+      body: JSON.stringify({ enabled }),
+    }),
   vaultChangePassword: (oldPassword: string, newPassword: string) =>
     request<VaultStatus>('/api/vault/change-password', {
       method: 'POST',

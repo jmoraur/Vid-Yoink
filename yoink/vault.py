@@ -52,6 +52,10 @@ class Vault:
         self._payload: dict | None = None
 
     @property
+    def path(self) -> Path:
+        return self._path
+
+    @property
     def state(self) -> str:
         if self._payload is not None:
             return "unlocked"
@@ -68,22 +72,43 @@ class Vault:
         self._write()
 
     def unlock(self, password: str) -> None:
-        if not self._path.exists():
-            raise VaultError("Vault is not initialized")
-        doc = json.loads(self._path.read_text())
-        salt = base64.b64decode(doc["salt"])
+        doc = self._read()
         # Derive with the params stored in the file, not the current module
         # constants — otherwise tuning the scrypt cost would lock out every
         # existing vault with a bogus "wrong password".
         kdf = doc["kdf"]
-        key = _derive(password, salt, n=kdf["n"], r=kdf["r"], p=kdf["p"])
+        salt = base64.b64decode(doc["salt"])
+        self._open(doc, _derive(password, salt, n=kdf["n"], r=kdf["r"], p=kdf["p"]))
+
+    def export_key(self) -> str:
+        """The key that opens this vault file, for safekeeping in the desktop
+        keyring. It stops working when the master password changes."""
+        self._require_unlocked()
+        assert self._key is not None
+        return _b64(self._key)
+
+    def unlock_with_key(self, key: str) -> None:
+        """Unlock with a key from export_key() instead of the master password."""
+        try:
+            raw = base64.b64decode(key)
+        except ValueError:  # not base64: whatever this is, it is not our key
+            raise WrongPassword() from None
+        self._open(self._read(), raw)
+
+    def _read(self) -> dict:
+        if not self._path.exists():
+            raise VaultError("Vault is not initialized")
+        return json.loads(self._path.read_text())
+
+    def _open(self, doc: dict, key: bytes) -> None:
         try:
             plaintext = AESGCM(key).decrypt(
                 base64.b64decode(doc["nonce"]), base64.b64decode(doc["ct"]), AAD
             )
-        except InvalidTag:
+        except (InvalidTag, ValueError):  # ValueError: not a usable key at all
             raise WrongPassword() from None
-        self._key, self._salt, self._payload = key, salt, json.loads(plaintext)
+        self._key, self._payload = key, json.loads(plaintext)
+        self._salt = base64.b64decode(doc["salt"])
 
     def lock(self) -> None:
         self._key = self._salt = self._payload = None

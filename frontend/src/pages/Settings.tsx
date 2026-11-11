@@ -181,6 +181,39 @@ function CookiesEditor({ cookies }: { cookies: string[] }) {
   )
 }
 
+function KeyringUnlock({ on, available }: { on: boolean; available: boolean }) {
+  const queryClient = useQueryClient()
+  const toggle = useMutation({
+    mutationFn: (enabled: boolean) => api.vaultKeyring(enabled),
+    onSuccess: (status) => queryClient.setQueryData(['vault'], status),
+    onError: () => queryClient.invalidateQueries({ queryKey: ['vault'] }),
+  })
+  return (
+    <div className="vault-block">
+      <h3>Unlock at launch</h3>
+      <div className="row checks">
+        <label>
+          <input
+            type="checkbox"
+            checked={on}
+            disabled={(!available && !on) || toggle.isPending}
+            onChange={(e) => toggle.mutate(e.target.checked)}
+          />
+          Unlock the vault automatically when the app starts
+        </label>
+      </div>
+      <p className="hint">
+        {available
+          ? 'Keeps the vault key in your desktop keyring (KWallet, GNOME Keyring), so you are ' +
+            'not asked for the master password each time. The password itself is not stored. ' +
+            'Anyone who can use your logged-in desktop can then use the stored logins.'
+          : 'Needs a desktop keyring and the secret-tool command (package libsecret).'}
+      </p>
+      {toggle.isError && <p className="error">{toggle.error.message}</p>}
+    </div>
+  )
+}
+
 function ChangePassword() {
   const [oldPw, setOldPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -384,6 +417,7 @@ export function Settings() {
           <>
             <CredentialsEditor credentials={vault.data.credentials ?? []} />
             <CookiesEditor cookies={vault.data.cookies ?? []} />
+            <KeyringUnlock on={vault.data.keyring} available={vault.data.keyring_available} />
             <ChangePassword />
           </>
         )}

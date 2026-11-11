@@ -1,3 +1,4 @@
+import subprocess
 import threading
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -23,6 +24,25 @@ def notifications(monkeypatch):
     monkeypatch.setattr("yoink.notify.which", lambda name: "/usr/bin/notify-send")
     monkeypatch.setattr("yoink.notify.Popen", lambda argv, **kw: sent.append(argv))
     return sent
+
+
+@pytest.fixture(autouse=True)
+def keyring_entries(monkeypatch):
+    """No test may touch the real desktop keyring; this dict stands in for it."""
+    entries = {}
+
+    def fake_secret_tool(action, vault_path, *options, secret=None):
+        key = str(vault_path)
+        if action == "store":
+            entries[key] = secret
+        elif action == "clear":
+            entries.pop(key, None)
+        found = entries.get(key) if action == "lookup" else ""
+        return subprocess.CompletedProcess([], 0 if found is not None else 1, found or "", "")
+
+    monkeypatch.setattr("yoink.keyring._run", fake_secret_tool)
+    monkeypatch.setattr("yoink.keyring.which", lambda name: "/usr/bin/secret-tool")
+    return entries
 
 
 @pytest.fixture

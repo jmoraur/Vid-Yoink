@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from .. import db, keyring
 from ..vault import Vault, VaultError, VaultLocked, WrongPassword
 
 router = APIRouter()
@@ -13,6 +14,10 @@ class PasswordIn(BaseModel):
 class ChangePasswordIn(BaseModel):
     old_password: str
     new_password: str
+
+
+class KeyringIn(BaseModel):
+    enabled: bool
 
 
 class CredentialIn(BaseModel):
@@ -30,7 +35,11 @@ def _vault(request: Request) -> Vault:
 
 def _status(request: Request) -> dict:
     vault = _vault(request)
-    status: dict = {"state": vault.state}
+    status: dict = {
+        "state": vault.state,
+        "keyring_available": keyring.available(),
+        "keyring": db.get_setting("vault_keyring") == "1",  # unlock itself at launch
+    }
     if vault.state == "unlocked":
         status |= vault.labels()
     return status
@@ -75,11 +84,38 @@ async def lock_vault(request: Request) -> dict:
     return _handle(request, lambda: _vault(request).lock())
 
 
+def _keep_key_in_keyring(vault: Vault) -> None:
+    if not keyring.store(vault.path, vault.export_key()):
+        db.set_setting("vault_keyring", "0")
+        raise VaultError("The desktop keyring did not take the key. Is the keyring unlocked?")
+    db.set_setting("vault_keyring", "1")
+
+
 @router.post("/vault/change-password")
 async def change_password(body: ChangePasswordIn, request: Request) -> dict:
-    return _handle(
-        request, lambda: _vault(request).change_password(body.old_password, body.new_password)
-    )
+    def change() -> None:
+        vault = _vault(request)
+        vault.change_password(body.old_password, body.new_password)
+        if db.get_setting("vault_keyring") == "1":  # a new password means a new key
+            _keep_key_in_keyring(vault)
+
+    return _handle(request, change)
+
+
+@router.put("/vault/keyring")
+async def set_keyring(body: KeyringIn, request: Request) -> dict:
+    """Opt in or out of keeping the vault key in the desktop keyring, so the vault
+    unlocks itself at launch. Opting in needs the vault unlocked (the key is only
+    known then); opting out removes the key from the keyring."""
+    def switch() -> None:
+        vault = _vault(request)
+        if body.enabled:
+            _keep_key_in_keyring(vault)
+        else:
+            keyring.clear(vault.path)
+            db.set_setting("vault_keyring", "0")
+
+    return _handle(request, switch)
 
 
 @router.put("/vault/credentials/{label}")

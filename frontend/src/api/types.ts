@@ -174,6 +174,8 @@ export interface ArchiveEntry {
 
 export interface VaultStatus {
   state: 'uninitialized' | 'locked' | 'unlocked'
+  keyring_available: boolean // a desktop keyring can be reached (secret-tool)
+  keyring: boolean // the vault key is kept there and the vault unlocks itself at launch
   credentials?: string[]
   cookies?: string[]
 }

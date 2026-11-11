@@ -10,7 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import PlainTextResponse
 from starlette.websockets import WebSocketClose
 
-from . import api, config, db, ws
+from . import api, config, db, keyring, ws
 from .jobs import JobManager
 from .scheduler import scheduler_loop
 from .vault import Vault
@@ -78,6 +78,9 @@ async def lifespan(app: FastAPI):
     db.init(config.db_path())
     app.state.broadcaster = Broadcaster()
     app.state.vault = Vault(config.vault_path())
+    if db.get_setting("vault_keyring") == "1" and app.state.vault.state == "locked":
+        # opted in under Settings; before the leftover jobs start, they may need it
+        await asyncio.to_thread(keyring.unlock, app.state.vault)
     max_concurrent = int(db.get_setting("max_concurrent") or 2)
     app.state.jobs = JobManager(
         app.state.broadcaster, app.state.vault, max_concurrent=max_concurrent
