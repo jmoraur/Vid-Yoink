@@ -63,6 +63,10 @@ class JobOut(BaseModel):
     created_at: str
     started_at: str | None = None
     finished_at: str | None = None
+    thumbnail: str | None = None  # remote address; the app stores no pictures
+    site: str | None = None
+    filesize: int | None = None
+    skipped: int = 0  # items left out because they were downloaded before
     progress: dict | None = None  # live snapshot, only for running jobs
 
     @classmethod
@@ -78,6 +82,10 @@ class JobOut(BaseModel):
             created_at=row["created_at"],
             started_at=row["started_at"],
             finished_at=row["finished_at"],
+            thumbnail=row["thumbnail"],
+            site=row["site"],
+            filesize=row["filesize"],
+            skipped=row["skipped"] or 0,
             progress=progress,
         )
 

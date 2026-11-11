@@ -37,6 +37,14 @@ export const api = {
     request<Job>(`/api/downloads/${id}/retry`, { method: 'POST' }),
   deleteDownload: (id: number) =>
     request<{ ok: boolean }>(`/api/downloads/${id}`, { method: 'DELETE' }),
+  openFolder: (id: number) =>
+    request<{ ok: boolean }>(`/api/downloads/${id}/open-folder`, { method: 'POST' }),
+  retryFailed: () =>
+    request<{ retried: number }>('/api/downloads/retry-failed', { method: 'POST' }),
+  clearDownloads: (status?: 'finished' | 'error' | 'cancelled') =>
+    request<{ deleted: number }>(`/api/downloads${status ? `?status=${status}` : ''}`, {
+      method: 'DELETE',
+    }),
 
   listArchive: (q?: string, subscriptionId?: number) => {
     const params = new URLSearchParams()
@@ -59,9 +67,10 @@ export const api = {
   deleteSubscription: (id: number) =>
     request<{ ok: boolean }>(`/api/subscriptions/${id}`, { method: 'DELETE' }),
   checkSubscription: (id: number) =>
-    request<{ new_jobs: number; error: string | null }>(`/api/subscriptions/${id}/check`, {
-      method: 'POST',
-    }),
+    request<{ new_jobs: number; failing: number; error: string | null }>(
+      `/api/subscriptions/${id}/check`,
+      { method: 'POST' },
+    ),
   seedSubscription: (id: number) =>
     request<{ seeded: number }>(`/api/subscriptions/${id}/seed`, { method: 'POST' }),
 

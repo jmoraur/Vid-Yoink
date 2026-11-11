@@ -100,6 +100,8 @@ class JobManager:
                 db.finish_job(
                     job_id, result.status,
                     files=result.files, error=result.error, title=result.title,
+                    thumbnail=result.thumbnail, site=result.site,
+                    filesize=result.filesize, skipped=result.skipped,
                 )
                 self._publish_status(job_id, result.status)
             finally:

@@ -144,7 +144,7 @@ Target main screen:
 └──────────────────────────────────────────────────────┘
 ```
 
-- [ ] **2.1 Backend support for richer rows**
+- [x] **2.1 Backend support for richer rows**
   - Database migration to version 2 (`yoink/db.py`): add to `jobs` the columns
     `thumbnail TEXT`, `filesize INTEGER`, `site TEXT`, `skipped INTEGER`.
   - `yoink/ydl/runner.py` fills them from yt-dlp's info (`thumbnail`,

@@ -82,6 +82,9 @@ class JobResult:
     error: str | None = None  # also set on 'finished' when only some items failed
     title: str | None = None
     skipped: int = 0  # items not downloaded because they are in the archive
+    thumbnail: str | None = None  # remote address of the (first) item's picture
+    site: str | None = None  # yt-dlp's name for the site, e.g. "Youtube"
+    filesize: int | None = None  # bytes on disk, all files together
 
 
 def run_download_job(
@@ -96,10 +99,14 @@ def run_download_job(
     last_emit = 0.0
     files: list[str] = []  # final paths, one per video, via the MoveFiles hook
     title_map: dict[str, str | None] = {}  # archive_id -> title, filled by hooks
+    first: dict = {}  # thumbnail and site of the first video seen (a playlist has neither)
 
     def remember_title(info: dict) -> None:
         if info.get("id") and info.get("extractor_key"):
             title_map[f"{info['extractor_key'].lower()} {info['id']}"] = info.get("title")
+            first.setdefault("site", info["extractor_key"])
+            if info.get("thumbnail"):
+                first.setdefault("thumbnail", info["thumbnail"])
 
     def progress_hook(d: dict) -> None:
         nonlocal last_emit
@@ -161,6 +168,7 @@ def run_download_job(
     try:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
+        info = info or {}
         files = _dedupe(files + _collect_files(info))
         errors = "\n".join(log.errors) or None
         return JobResult(
@@ -169,8 +177,11 @@ def run_download_job(
             status="error" if errors and not files else "finished",
             files=files,
             error=errors,
-            title=(info or {}).get("title"),
+            title=info.get("title"),
             skipped=len(archive.hits),
+            thumbnail=first.get("thumbnail") or info.get("thumbnail"),
+            site=first.get("site") or info.get("extractor_key"),
+            filesize=sum(os.path.getsize(f) for f in files if os.path.exists(f)) or None,
         )
     except DownloadCancelled:
         return JobResult(status="cancelled")

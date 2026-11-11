@@ -87,6 +87,10 @@ export interface Job {
   created_at: string
   started_at: string | null
   finished_at: string | null
+  thumbnail: string | null // remote address
+  site: string | null // yt-dlp's name for the site, e.g. "Youtube"
+  filesize: number | null // bytes on disk
+  skipped: number // items left out because they were downloaded before
   progress: JobProgress | null
 }
 

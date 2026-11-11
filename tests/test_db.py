@@ -1,3 +1,5 @@
+import sqlite3
+
 import pytest
 
 from yoink import db
@@ -51,3 +53,28 @@ def test_archive_keys():
             ("youtube", "abc123", db.utcnow()),
         )
     assert db.archive_keys() == {"youtube abc123"}
+
+
+def test_version_1_database_is_upgraded(tmp_path):
+    """A database written by yoink 0.1.0 gains the job columns and keeps its rows."""
+    path = tmp_path / "old.db"
+    old = sqlite3.connect(path)
+    old.executescript(db.SCHEMA)
+    old.execute("PRAGMA user_version = 1")
+    old.execute(
+        "INSERT INTO jobs (url, options_json, status, created_at)"
+        " VALUES ('https://example.com/v', '{}', 'finished', '2026-07-10T10:00:00+00:00')"
+    )
+    old.commit()
+    old.close()
+
+    db.init(path)
+    db.init(path)  # a second start must not try to add the columns again
+    row = db.list_jobs()[0]
+    assert (row["url"], row["status"]) == ("https://example.com/v", "finished")
+    assert [row[c] for c in ("thumbnail", "filesize", "site", "skipped")] == [None] * 4
+    db.finish_job(row["id"], "finished", thumbnail="https://x/t.jpg", site="Youtube",
+                  filesize=1234, skipped=2)
+    row = db.get_job(row["id"])
+    assert (row["thumbnail"], row["site"], row["filesize"], row["skipped"]) == (
+        "https://x/t.jpg", "Youtube", 1234, 2)

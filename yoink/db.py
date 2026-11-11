@@ -79,6 +79,10 @@ def init(db_path: Path) -> None:
         if version < 1:
             conn.executescript(SCHEMA)
             conn.execute("PRAGMA user_version = 1")
+        if version < 2:  # facts for the job rows in the interface
+            for column in ("thumbnail TEXT", "filesize INTEGER", "site TEXT", "skipped INTEGER"):
+                conn.execute(f"ALTER TABLE jobs ADD COLUMN {column}")
+            conn.execute("PRAGMA user_version = 2")
         # A previous process that was killed mid-download leaves 'running' rows.
         # Put them back in line; the app queues every 'queued' row again at start.
         conn.execute(
@@ -145,9 +149,12 @@ def mark_job_running(job_id: int) -> None:
 
 
 def requeue_job(job_id: int) -> None:
+    """Back in line with a clean slate: after a shutdown, or for a retry."""
     with session() as conn:
         conn.execute(
-            "UPDATE jobs SET status = 'queued', started_at = NULL WHERE id = ?", (job_id,)
+            "UPDATE jobs SET status = 'queued', started_at = NULL, finished_at = NULL,"
+            " error = NULL, files_json = NULL, filesize = NULL, skipped = NULL WHERE id = ?",
+            (job_id,),
         )
 
 
@@ -163,12 +170,28 @@ def finish_job(
     files: list[str] | None = None,
     error: str | None = None,
     title: str | None = None,
+    thumbnail: str | None = None,
+    site: str | None = None,
+    filesize: int | None = None,
+    skipped: int = 0,
 ) -> None:
     with session() as conn:
         conn.execute(
-            "UPDATE jobs SET status = ?, files_json = ?, error = ?,"
-            " title = COALESCE(?, title), finished_at = ? WHERE id = ?",
-            (status, json.dumps(files) if files else None, error, title, utcnow(), job_id),
+            "UPDATE jobs SET status = ?, files_json = ?, error = ?, finished_at = ?,"
+            " filesize = ?, skipped = ?, title = COALESCE(?, title),"
+            " thumbnail = COALESCE(?, thumbnail), site = COALESCE(?, site) WHERE id = ?",
+            (
+                status,
+                json.dumps(files) if files else None,
+                error,
+                utcnow(),
+                filesize,
+                skipped,
+                title,
+                thumbnail,
+                site,
+                job_id,
+            ),
         )
 
 
@@ -225,6 +248,14 @@ def delete_archive_entry(archive_id: int) -> bool:
 def delete_job(job_id: int) -> bool:
     with session() as conn:
         return conn.execute("DELETE FROM jobs WHERE id = ?", (job_id,)).rowcount > 0
+
+
+def delete_jobs(statuses: set[str]) -> int:
+    marks = ", ".join("?" * len(statuses))
+    with session() as conn:
+        return conn.execute(
+            f"DELETE FROM jobs WHERE status IN ({marks})", tuple(statuses)
+        ).rowcount
 
 
 # --- subscriptions ---
