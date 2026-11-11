@@ -3,6 +3,7 @@ event loop: only communicate outward through the emit callback (thread-safe) and
 per-thread DB connections."""
 
 import os
+import re
 import time
 from dataclasses import dataclass, field
 from threading import Event
@@ -36,6 +37,13 @@ class SqliteArchive(set):
         self._job_id = job_id
         self._subscription_id = subscription_id
         self._title_map = title_map
+        self.hits: set[str] = set()  # ids yt-dlp looked up and found = items it skipped
+
+    def __contains__(self, archive_id: object) -> bool:
+        hit = super().__contains__(archive_id)
+        if hit:
+            self.hits.add(str(archive_id))
+        return hit
 
     def add(self, archive_id: str) -> None:
         extractor, _, video_id = str(archive_id).partition(" ")
@@ -49,12 +57,31 @@ class SqliteArchive(set):
         super().add(archive_id)
 
 
+class ErrorCollector:
+    """yt-dlp's documented `logger` param. Our options come from yt-dlp's CLI
+    parser, which sets ignoreerrors: a failed item is logged and skipped, never
+    raised. This is the only place those failures can be seen."""
+
+    def __init__(self) -> None:
+        self.errors: list[str] = []
+
+    def debug(self, msg: str) -> None:
+        pass
+
+    warning = debug
+
+    def error(self, msg: str) -> None:
+        # drop terminal colour codes and yt-dlp's own "ERROR: " prefix
+        self.errors.append(re.sub(r"\x1b\[[0-9;]*m", "", msg).removeprefix("ERROR: "))
+
+
 @dataclass
 class JobResult:
     status: str  # finished | error | cancelled
     files: list[str] = field(default_factory=list)
-    error: str | None = None
+    error: str | None = None  # also set on 'finished' when only some items failed
     title: str | None = None
+    skipped: int = 0  # items not downloaded because they are in the archive
 
 
 def run_download_job(
@@ -123,7 +150,8 @@ def run_download_job(
     opts = dict(ydl_opts)
     opts["progress_hooks"] = [progress_hook]
     opts["postprocessor_hooks"] = [postprocessor_hook]
-    opts["download_archive"] = SqliteArchive(
+    opts["logger"] = log = ErrorCollector()
+    opts["download_archive"] = archive = SqliteArchive(
         job_id,
         subscription_id,
         preload=set() if force_download else db.archive_keys(),
@@ -133,10 +161,16 @@ def run_download_job(
     try:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
+        files = _dedupe(files + _collect_files(info))
+        errors = "\n".join(log.errors) or None
         return JobResult(
-            status="finished",
-            files=_dedupe(files + _collect_files(info)),
+            # Nothing downloaded and something failed = failed. Some files plus
+            # some failures (a playlist with one dead item) = finished, errors kept.
+            status="error" if errors and not files else "finished",
+            files=files,
+            error=errors,
             title=(info or {}).get("title"),
+            skipped=len(archive.hits),
         )
     except DownloadCancelled:
         return JobResult(status="cancelled")

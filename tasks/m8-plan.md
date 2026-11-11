@@ -50,7 +50,7 @@ argv-through-yt-dlp's-parser approach, the archive design, the vault.
 
 Do this first. The new queue (Phase 2) is only useful if statuses are honest.
 
-- [ ] **1.1 Report failures as failures**
+- [x] **1.1 Report failures as failures**
   - Where: `yoink/ydl/runner.py`.
   - How: give yt-dlp a `logger` object (documented option) whose `error()` collects
     messages. Count archive hits by overriding `__contains__` on `SqliteArchive`.
