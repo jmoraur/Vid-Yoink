@@ -105,7 +105,7 @@ Do this first. The new queue (Phase 2) is only useful if statuses are honest.
     interactive preview, use 5000 for checks and seeding.
   - Done when: `tests/test_probe.py` covers the parameter; README limitation updated.
 
-- [ ] **1.7 Fresh yt-dlp, and say when it is old**
+- [x] **1.7 Fresh yt-dlp, and say when it is old**
   - `uv lock --upgrade-package yt-dlp && uv sync`, run tests and one real download.
   - Settings: yt-dlp's version is a date; show a warning when it is over 90 days old
     (`yoink/api/settings.py` adds `yt_dlp_outdated`).

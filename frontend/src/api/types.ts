@@ -159,4 +159,5 @@ export interface AppSettings {
   max_concurrent: number
   ffmpeg_available: boolean
   yt_dlp_version: string
+  yt_dlp_outdated: boolean
 }

@@ -261,6 +261,16 @@ function GeneralSettings() {
           embedding will fail. Install it (on Fedora: RPM Fusion's ffmpeg).
         </p>
       )}
+      {settings.data.yt_dlp_outdated && (
+        <div className="banner" role="status">
+          <Icon name="alert" />
+          <span>
+            yt-dlp {settings.data.yt_dlp_version} is more than 90 days old. Sites change
+            often, so some downloads may fail until it is updated (
+            <code>sudo dnf upgrade yt-dlp</code>).
+          </span>
+        </div>
+      )}
       <div className="row">
         <label className="grow">
           Default download folder
