@@ -73,7 +73,7 @@ Do this first. The new queue (Phase 2) is only useful if statuses are honest.
   - Done when: new `tests/test_security.py` passes — the four cases in finding B are
     now refused, and the same calls without foreign headers still work.
 
-- [ ] **1.3 Subscription checks respect the queue**
+- [x] **1.3 Subscription checks respect the queue**
   - Where: `yoink/scheduler.py:52`, one new query in `yoink/db.py`.
   - Rule: skip an item if this subscription already has a job for that URL that is
     queued or running, or that has failed 3 times. Show "N failing" in the check

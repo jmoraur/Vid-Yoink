@@ -285,6 +285,17 @@ def due_subscriptions() -> list[sqlite3.Row]:
         ).fetchall()
 
 
+def subscription_job_counts(sub_id: int) -> dict[str, tuple[int, int]]:
+    """url -> (waiting or running jobs, failed jobs) for one subscription."""
+    with session() as conn:
+        rows = conn.execute(
+            "SELECT url, SUM(status IN ('queued', 'running')), SUM(status = 'error')"
+            " FROM jobs WHERE subscription_id = ? GROUP BY url",
+            (sub_id,),
+        ).fetchall()
+    return {r[0]: (r[1], r[2]) for r in rows}
+
+
 def record_subscription_check(sub_id: int, result: str) -> None:
     row = get_subscription(sub_id)
     interval = row["check_interval_minutes"] if row else None
