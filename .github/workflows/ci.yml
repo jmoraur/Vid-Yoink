@@ -27,3 +27,4 @@ jobs:
           node-version: 24
       - run: npm ci
       - run: npm run build  # runs tsc first
+      - run: npm run check  # wording helpers (plain Node)

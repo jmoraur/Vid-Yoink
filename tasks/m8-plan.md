@@ -186,7 +186,7 @@ Target main screen:
   - Done when: screenshots of a running, queued, finished, skipped, failed and
     cancelled row all read clearly at 1100 px and 390 px, in both themes.
 
-- [ ] **2.5 Human wording**
+- [x] **2.5 Human wording**
   - One helper for relative times (`Intl.RelativeTimeFormat`); use it in jobs,
     subscriptions and the archive. Full date in the tooltip.
   - Subscriptions: "Checks every 2 hours · last checked 10 min ago · 2 new".

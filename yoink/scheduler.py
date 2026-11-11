@@ -70,7 +70,9 @@ async def check_subscription(
                 job_id = db.create_job(entry.url, options_json, subscription_id=sub_id)
                 manager.enqueue(job_id)
                 new_jobs.append(job_id)
-            result = f"{len(new_jobs)} new item(s)" + (f", {failing} failing" if failing else "")
+            result = (f"{len(new_jobs)} new" if new_jobs else "nothing new") + (
+                f", {failing} failing" if failing else ""
+            )
         except Exception as exc:
             error = str(exc)
             result = f"error: {error}"

@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Job } from '../api/types'
 import { api } from '../api/client'
-import { formatBytes, formatDuration, fullDate, hostOf, timeAgo } from '../lib/format'
+import { explain } from '../lib/errors'
+import { formatBytes, formatDuration, fullDate, hostOf, shortLink, timeAgo } from '../lib/format'
 import { useCancelling, useJobProgress } from '../ws'
 import { Icon } from './ui/Icon'
 
@@ -45,8 +46,8 @@ export function JobRow({ job }: { job: Job }) {
   const active = job.status === 'queued' || job.status === 'running'
   const downloading = job.status === 'running' && progress?.status === 'downloading'
   const pct = progress?.progress != null ? Math.round(progress.progress * 100) : null
-  const failedItems = job.error ? job.error.split('\n').length : 0
-  const label = job.title ?? progress?.item_title ?? progress?.filename ?? job.url
+  const problems = job.error ? job.error.split('\n') : [] // one line per failed item
+  const title = job.title ?? progress?.item_title
   const when = job.finished_at ?? job.created_at
 
   // One word (or a few) for the state, and its colour.
@@ -61,7 +62,7 @@ export function JobRow({ job }: { job: Job }) {
   else if (job.status === 'error') state = ['Failed', 'error']
   else if (job.status === 'cancelled') state = ['Cancelled', 'cancelled']
   else if (job.files.length === 0 && job.skipped > 0) state = ['Already downloaded', 'queued']
-  else if (job.error) state = [`Finished, ${failedItems} failed`, 'cancelled']
+  else if (job.error) state = [`Finished, ${problems.length} failed`, 'cancelled']
   else state = ['Finished', 'finished']
 
   // The quiet line of facts after the state.
@@ -77,7 +78,7 @@ export function JobRow({ job }: { job: Job }) {
     if (job.files.length > 1) facts.push(`${job.files.length} files`)
     if (job.filesize) facts.push(formatBytes(job.filesize))
     if (job.files.length > 0 && job.skipped > 0) facts.push(`${job.skipped} already downloaded`)
-    facts.push(job.site ?? hostOf(job.url))
+    if (title) facts.push(job.site ?? hostOf(job.url)) // untitled rows name the site in the title
   }
 
   return (
@@ -90,7 +91,7 @@ export function JobRow({ job }: { job: Job }) {
       <div className="job-body">
         <div className="job-main">
           <span className="job-title" title={job.url}>
-            {label}
+            {title ?? shortLink(job.url)}
           </span>
           <span className="job-actions">
             {job.files.length > 0 && (
@@ -154,7 +155,18 @@ export function JobRow({ job }: { job: Job }) {
             <div className="fill" style={{ width: `${pct ?? 0}%` }} />
           </div>
         )}
-        {job.error && <p className="error">{job.error}</p>}
+        {problems.length > 0 && (
+          <div className="problem">
+            <p>
+              {explain(problems[0])}
+              {problems.length > 1 && ` (and ${problems.length - 1} more)`}
+            </p>
+            <details>
+              <summary>Details</summary>
+              <pre>{job.error}</pre>
+            </details>
+          </div>
+        )}
         {openFolder.isError && <p className="error">{openFolder.error.message}</p>}
       </div>
     </div>

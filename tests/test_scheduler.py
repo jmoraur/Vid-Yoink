@@ -50,4 +50,4 @@ def test_item_that_keeps_failing_is_given_up(sub_id):
     result = check(sub_id, manager)
     assert (result["new_jobs"], result["failing"]) == (0, 2)
     assert len(manager.enqueued) == 2 * scheduler.MAX_FAILURES
-    assert db.get_subscription(sub_id)["last_check_result"] == "0 new item(s), 2 failing"
+    assert db.get_subscription(sub_id)["last_check_result"] == "nothing new, 2 failing"

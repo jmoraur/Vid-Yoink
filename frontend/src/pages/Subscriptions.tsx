@@ -7,6 +7,8 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Icon } from '../components/ui/Icon'
 import { Skeleton } from '../components/ui/Skeleton'
+import { explain } from '../lib/errors'
+import { formatInterval, fullDate, timeAgo } from '../lib/format'
 import { Archive } from './Archive'
 
 const EMPTY: SubscriptionIn = {
@@ -77,7 +79,7 @@ function SubscriptionEditor({
           </select>
         </label>
         <label>
-          Auto-check every (minutes)
+          Check every (minutes)
           <input
             type="number"
             min={5}
@@ -88,7 +90,7 @@ function SubscriptionEditor({
                 check_interval_minutes: e.target.value === '' ? null : Number(e.target.value),
               })
             }
-            placeholder="manual only"
+            placeholder="by hand only"
           />
         </label>
       </div>
@@ -137,36 +139,60 @@ function SubscriptionRow({ sub }: { sub: Subscription }) {
 
   if (editing) return <SubscriptionEditor sub={sub} onDone={() => setEditing(false)} />
 
+  // "error: …" is how the server records a check that could not read the list
+  const lastError = sub.last_check_result?.startsWith('error: ')
+    ? sub.last_check_result.slice('error: '.length)
+    : (check.data?.error ?? null)
+  const schedule = !sub.enabled
+    ? 'Paused'
+    : sub.check_interval_minutes
+      ? `Checks ${formatInterval(sub.check_interval_minutes)}`
+      : 'Checked by hand only'
+
   return (
     <div className={`job ${sub.enabled ? '' : 'disabled'}`}>
       <div className="job-main">
         <span className="job-title" title={sub.url}>
           {sub.name}
         </span>
-        <span className="muted">
-          {sub.check_interval_minutes
-            ? `every ${sub.check_interval_minutes} min`
-            : 'manual'}
+        <span className="job-actions">
+          <button className="small" disabled={check.isPending} onClick={() => check.mutate()}>
+            {check.isPending ? 'Checking…' : 'Check now'}
+          </button>
+          <button className="small" onClick={() => setEditing(true)}>
+            Edit
+          </button>
+          <button className="danger-ghost" onClick={() => remove.mutate()}>
+            Delete
+          </button>
         </span>
-        <button className="small" disabled={check.isPending} onClick={() => check.mutate()}>
-          {check.isPending ? 'Checking…' : 'Check now'}
-        </button>
-        <button className="small" onClick={() => setEditing(true)}>
-          Edit
-        </button>
-        <button className="danger-ghost" onClick={() => remove.mutate()}>
-          Delete
-        </button>
       </div>
-      <p className="muted">
-        {sub.last_check_at
-          ? `Last check ${sub.last_check_at}: ${sub.last_check_result ?? ''}`
-          : 'Never checked.'}
-        {sub.enabled && sub.next_check_at && ` · next ${sub.next_check_at}`}
-        {' · '}
-        <Link to={`/subscriptions/archive?sub=${sub.id}`}>downloaded items</Link>
+      <p className="job-facts">
+        <span>{schedule}</span>
+        {sub.last_check_at ? (
+          <span title={fullDate(sub.last_check_at)}>last checked {timeAgo(sub.last_check_at)}</span>
+        ) : (
+          <span>never checked</span>
+        )}
+        {sub.last_check_at && (
+          <span>{lastError ? 'the check failed' : sub.last_check_result}</span>
+        )}
+        {sub.enabled && sub.next_check_at && (
+          <span title={fullDate(sub.next_check_at)}>next check {timeAgo(sub.next_check_at)}</span>
+        )}
+        <span>
+          <Link to={`/subscriptions/archive?sub=${sub.id}`}>downloaded items</Link>
+        </span>
       </p>
-      {check.data?.error && <p className="error">{check.data.error}</p>}
+      {lastError && (
+        <div className="problem">
+          <p>{explain(lastError)}</p>
+          <details>
+            <summary>Details</summary>
+            <pre>{lastError}</pre>
+          </details>
+        </div>
+      )}
     </div>
   )
 }

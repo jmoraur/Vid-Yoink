@@ -300,6 +300,40 @@ button.link:hover:not(:disabled) {
   margin-top: var(--sp-2);
 }
 
+/* what went wrong, in a sentence; yt-dlp's own text behind "Details" */
+.problem {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.problem p {
+  margin: 0;
+}
+
+.problem summary {
+  width: fit-content;
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.problem summary:hover {
+  color: var(--text);
+}
+
+.problem pre {
+  margin: var(--sp-1) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* --- transfer strip: the one loud element in the app --- */
 
 .bar {

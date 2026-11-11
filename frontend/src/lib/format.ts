@@ -59,3 +59,14 @@ export function hostOf(url: string): string {
     return url
   }
 }
+
+/** For a download without a title: "youtube.com · watch?v=abc" instead of the full link. */
+export function shortLink(url: string): string {
+  try {
+    const { pathname, search } = new URL(url)
+    const last = decodeURIComponent(pathname.split('/').filter(Boolean).pop() ?? '') + search
+    return last ? `${hostOf(url)} · ${last}` : hostOf(url)
+  } catch {
+    return url
+  }
+}

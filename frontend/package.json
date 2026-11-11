@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "check": "node src/lib/errors.check.ts",
     "preview": "vite preview"
   },
   "dependencies": {
