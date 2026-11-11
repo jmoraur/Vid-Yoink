@@ -45,7 +45,8 @@ def test_download_then_archive_skip(tmp_path, file_url):
     first = run(file_url, tmp_path)
     assert (first.status, first.error, first.skipped) == ("finished", None, 0)
     assert len(first.files) == 1
-    assert (first.filesize, first.site, first.thumbnail) == (2048, "Generic", None)
+    assert (first.filesize, first.thumbnail) == (2048, None)
+    assert first.site.startswith("127.0.0.1")  # the domain; real sites give "youtube.com"
 
     second = run(file_url, tmp_path)  # now in the archive
     assert (second.status, second.error, second.files) == ("finished", None, [])

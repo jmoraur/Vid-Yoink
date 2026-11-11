@@ -69,6 +69,7 @@ export interface JobProgress {
   eta?: number | null
   filename?: string | null
   item_title?: string | null
+  thumbnail?: string | null
   playlist_index?: number | null
   playlist_count?: number | null
   postprocessor?: string | null
@@ -88,7 +89,7 @@ export interface Job {
   started_at: string | null
   finished_at: string | null
   thumbnail: string | null // remote address
-  site: string | null // yt-dlp's name for the site, e.g. "Youtube"
+  site: string | null // e.g. "youtube.com"
   filesize: number | null // bytes on disk
   skipped: number // items left out because they were downloaded before
   progress: JobProgress | null

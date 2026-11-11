@@ -21,6 +21,9 @@ export type IconName =
   | 'lock'
   | 'unlock'
   | 'inbox'
+  | 'folder'
+  | 'film'
+  | 'music'
 
 const PATHS: Record<IconName, ReactNode> = {
   download: (
@@ -150,6 +153,22 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M22 12h-6l-2 3h-4l-2-3H2" />
       <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+    </>
+  ),
+  folder: (
+    <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+  ),
+  film: (
+    <>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M7 3v18M17 3v18M3 12h18M3 7.5h4M3 16.5h4M17 7.5h4M17 16.5h4" />
+    </>
+  ),
+  music: (
+    <>
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
     </>
   ),
 }

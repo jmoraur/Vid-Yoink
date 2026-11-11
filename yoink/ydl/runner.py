@@ -71,8 +71,10 @@ class ErrorCollector:
     warning = debug
 
     def error(self, msg: str) -> None:
-        # drop terminal colour codes and yt-dlp's own "ERROR: " prefix
-        self.errors.append(re.sub(r"\x1b\[[0-9;]*m", "", msg).removeprefix("ERROR: "))
+        # Drop terminal colour codes and yt-dlp's own "ERROR: " prefix, and keep each
+        # failure on one line: the lines are joined later and counted in the interface.
+        msg = re.sub(r"\x1b\[[0-9;]*m", "", msg).removeprefix("ERROR: ")
+        self.errors.append(" ".join(msg.split()))
 
 
 @dataclass
@@ -83,7 +85,7 @@ class JobResult:
     title: str | None = None
     skipped: int = 0  # items not downloaded because they are in the archive
     thumbnail: str | None = None  # remote address of the (first) item's picture
-    site: str | None = None  # yt-dlp's name for the site, e.g. "Youtube"
+    site: str | None = None  # "youtube.com"; yt-dlp's extractor name if it gives no domain
     filesize: int | None = None  # bytes on disk, all files together
 
 
@@ -104,7 +106,7 @@ def run_download_job(
     def remember_title(info: dict) -> None:
         if info.get("id") and info.get("extractor_key"):
             title_map[f"{info['extractor_key'].lower()} {info['id']}"] = info.get("title")
-            first.setdefault("site", info["extractor_key"])
+            first.setdefault("site", info.get("webpage_url_domain") or info["extractor_key"])
             if info.get("thumbnail"):
                 first.setdefault("thumbnail", info["thumbnail"])
 
@@ -132,6 +134,7 @@ def run_download_job(
             "eta": d.get("eta"),
             "filename": os.path.basename(filename) if filename else None,
             "item_title": info.get("title"),
+            "thumbnail": info.get("thumbnail"),
             "playlist_index": info.get("playlist_index"),
             "playlist_count": info.get("n_entries"),
         })

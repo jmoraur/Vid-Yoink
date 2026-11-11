@@ -135,8 +135,7 @@ button.link:hover:not(:disabled) {
 
 /* --- chips: data-colored, never color-only (text is always present) --- */
 
-.chip,
-.job-status {
+.chip {
   --_c: var(--text-faint);
   display: inline-flex;
   align-items: center;
@@ -223,18 +222,88 @@ button.link:hover:not(:disabled) {
   margin-left: auto;
 }
 
-/* --- transfer strip: the one loud element in the app --- */
+/* --- download rows: picture, title, one quiet line of facts --- */
 
-.job-progress {
-  display: flex;
-  align-items: center;
+.job.media {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: var(--sp-3);
+  align-items: start;
+  padding: var(--sp-3);
+}
+
+.thumb {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+  color: var(--text-faint);
+  overflow: hidden;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.job.media .job-main {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.job.media .job-title {
+  font-size: var(--fs-base);
+  line-height: 1.35;
+  padding-top: 0.15rem;
+}
+
+.job.media .job-actions {
+  margin-block: -0.15rem;
+}
+
+.job-facts {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.45rem;
+  margin: 0.15rem 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.job-facts > * + *::before {
+  content: '·';
+  margin-right: 0.45rem;
+  color: var(--text-faint);
+}
+
+/* the state: a coloured dot and a word (never colour alone) */
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--_c);
+  font-weight: 600;
+}
+
+.state::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--_c);
+}
+
+.job.media .bar {
   margin-top: var(--sp-2);
 }
 
+/* --- transfer strip: the one loud element in the app --- */
+
 .bar {
-  flex: 1;
-  height: 8px;
+  height: 6px;
   background: var(--surface-2);
   border-radius: var(--r-pill);
   overflow: hidden;
@@ -269,16 +338,9 @@ button.link:hover:not(:disabled) {
   }
 }
 
-.stats,
 .font-mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-
-.stats {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  white-space: nowrap;
 }
 
 /* --- text helpers --- */
@@ -291,7 +353,6 @@ button.link:hover:not(:disabled) {
   overflow-wrap: anywhere;
 }
 
-.files,
 .muted {
   color: var(--text-muted);
   font-size: var(--fs-sm);
@@ -677,6 +738,10 @@ button.link:hover:not(:disabled) {
 
   .probe-head img {
     width: 88px;
+  }
+
+  .thumb {
+    width: 72px;
   }
 
   .download-form {

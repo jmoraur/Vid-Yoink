@@ -176,7 +176,7 @@ Target main screen:
     filter chips plus "Clear finished" and "Retry failed".
   - Done when: paste → download → watch → open folder works without leaving the page.
 
-- [ ] **2.4 New row**
+- [x] **2.4 New row**
   - `components/JobRow.tsx`: small 16:9 thumbnail (icon fallback when missing or it
     fails to load), title, one quiet line of facts (format · size · site · "2 h ago"),
     a small coloured dot plus word instead of the capital-letter badge, actions on the
