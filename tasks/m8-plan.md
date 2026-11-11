@@ -4,10 +4,10 @@ Written 2026-11-11 after a fresh-eyes review of the whole project (backend read 
 full, app run with sample data, every page viewed in light, dark and phone width).
 Phases 1 and 2 were built on 2026-11-11 (branch `m8-fixes-and-redesign`, one commit per
 step) and pushed; CI is green. Phase 3 was built the same day on branch `m8-phase-3`
-(one commit per feature, not pushed yet). Nothing is open.
+(one commit per feature) and merged into `main`. M8 is closed; nothing is open.
 
-**How to resume:** start at the first unchecked box. Each step lists where to change
-the code and how to know it is done.
+Every box below is checked. Each step lists where the code was changed and how it was
+known to be done.
 
 ## What the review found
 

@@ -77,7 +77,7 @@ Full findings, steps and done-checks: [m8-plan.md](m8-plan.md).
 
 - [x] Phase 1 — correctness and safety (steps 1.1–1.8; CI green on the pushed branch)
 - [x] Phase 2 — interface rework (steps 2.1–2.7; version 0.2.0)
-- [x] Phase 3 — new features (all five; version 0.3.0; branch `m8-phase-3`, not pushed)
+- [x] Phase 3 — new features (all five; version 0.3.0; merged into `main`)
 
 Verified during M8: 54 backend tests + wording check green; real YouTube download,
 repeat (skipped) and unavailable video (error) with yt-dlp 2026.10.26; foreign
