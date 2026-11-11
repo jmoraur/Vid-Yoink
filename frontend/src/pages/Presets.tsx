@@ -39,7 +39,7 @@ function PresetEditor({
   })
 
   return (
-    <div className="preset-editor">
+    <div className="preset-editor flat">
       <div className="row">
         <label className="grow">
           Name
@@ -71,17 +71,25 @@ export function Presets() {
 
   if (editing !== null) {
     return (
-      <PresetEditor preset={editing === 'new' ? null : editing} onDone={() => setEditing(null)} />
+      <>
+        <h2>{editing === 'new' ? 'New preset' : `Edit preset “${editing.name}”`}</h2>
+        <PresetEditor preset={editing === 'new' ? null : editing} onDone={() => setEditing(null)} />
+      </>
     )
   }
 
   return (
     <div>
-      <div className="page-actions">
-        <button onClick={() => setEditing('new')}>
-          <Icon name="plus" /> New preset
+      <div className="card-title-row">
+        <h2>Presets</h2>
+        <button className="small" onClick={() => setEditing('new')}>
+          <Icon name="plus" size={14} /> New preset
         </button>
       </div>
+      <p className="hint">
+        Saved sets of download options. Pick one from the options panel on the Downloads
+        page, or give one to a subscription.
+      </p>
       {presets.isPending && <Skeleton lines={2} />}
       {presets.isError && (
         <ErrorState message={presets.error.message} onRetry={() => presets.refetch()} />
@@ -108,7 +116,7 @@ export function Presets() {
             <EmptyState
               icon="sliders"
               title="No presets yet"
-              hint="Configure options on the Download page and save them, or create one here."
+              hint="Set up options on the Downloads page and save them, or create one here."
             />
           )}
         </section>

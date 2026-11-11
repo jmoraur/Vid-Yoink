@@ -4,6 +4,7 @@ import { api } from '../api/client'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Icon } from '../components/ui/Icon'
 import { Skeleton } from '../components/ui/Skeleton'
+import { Presets } from './Presets'
 
 function useVaultInvalidate() {
   const queryClient = useQueryClient()
@@ -310,6 +311,9 @@ export function Settings() {
   return (
     <div>
       <GeneralSettings />
+      <div className="options-form settings-card" id="presets">
+        <Presets />
+      </div>
       <div className="options-form">
         <div className="card-title-row">
           <h2>Credential vault</h2>

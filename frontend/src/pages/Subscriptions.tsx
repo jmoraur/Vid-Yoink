@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, NavLink, Route, Routes } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Subscription, SubscriptionIn } from '../api/types'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Icon } from '../components/ui/Icon'
 import { Skeleton } from '../components/ui/Skeleton'
+import { Archive } from './Archive'
 
 const EMPTY: SubscriptionIn = {
   name: '',
@@ -163,7 +164,7 @@ function SubscriptionRow({ sub }: { sub: Subscription }) {
           : 'Never checked.'}
         {sub.enabled && sub.next_check_at && ` · next ${sub.next_check_at}`}
         {' · '}
-        <Link to={`/archive?sub=${sub.id}`}>archive</Link>
+        <Link to={`/subscriptions/archive?sub=${sub.id}`}>downloaded items</Link>
       </p>
       {check.data?.error && <p className="error">{check.data.error}</p>}
     </div>
@@ -171,6 +172,25 @@ function SubscriptionRow({ sub }: { sub: Subscription }) {
 }
 
 export function Subscriptions() {
+  return (
+    <div>
+      <div className="filters" role="navigation" aria-label="Subscription views">
+        <NavLink to="/subscriptions" end className="tab">
+          Subscriptions
+        </NavLink>
+        <NavLink to="/subscriptions/archive" className="tab">
+          Downloaded items
+        </NavLink>
+      </div>
+      <Routes>
+        <Route index element={<SubscriptionList />} />
+        <Route path="archive" element={<Archive />} />
+      </Routes>
+    </div>
+  )
+}
+
+function SubscriptionList() {
   const [adding, setAdding] = useState(false)
   const subs = useQuery({ queryKey: ['subscriptions'], queryFn: api.listSubscriptions })
 

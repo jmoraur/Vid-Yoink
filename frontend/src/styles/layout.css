@@ -6,13 +6,12 @@
   padding: var(--sp-4) clamp(0.75rem, 3vw, 1.5rem) var(--sp-6);
 }
 
-/* Two rows: wordmark + theme toggle, then the nav on its own line —
-   six icon tabs never fit beside the wordmark in an 800px column. */
+/* One row: wordmark, the three sections, theme toggle. */
 header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2) var(--sp-4);
+  gap: var(--sp-2) var(--sp-5);
   margin-bottom: var(--sp-5);
   padding-block: var(--sp-2);
 }
@@ -39,14 +38,19 @@ header {
 nav {
   display: flex;
   gap: var(--sp-1);
-  order: 3;
-  flex-basis: 100%;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 
-nav::-webkit-scrollbar {
-  display: none;
+/* phone: the sections get their own full-width row under the wordmark */
+@media (max-width: 560px) {
+  nav {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  nav a {
+    flex: 1;
+    justify-content: center;
+  }
 }
 
 nav a {

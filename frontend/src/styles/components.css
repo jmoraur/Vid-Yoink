@@ -21,7 +21,8 @@
   margin-bottom: var(--sp-3);
 }
 
-.preset-editor .options-form {
+.preset-editor .options-form,
+.preset-editor.flat {
   border: none;
   box-shadow: none;
   padding: 0;
@@ -442,12 +443,29 @@
   display: none;
 }
 
-.filters button {
+.filters button,
+.filters .tab {
   border-radius: var(--r-pill);
   white-space: nowrap;
 }
 
-.filters button.active {
+/* a link styled like the filter buttons, for switching views */
+.filters .tab {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.filters .tab:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.filters button.active,
+.filters .tab.active {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   border-color: var(--accent);
   color: var(--accent);

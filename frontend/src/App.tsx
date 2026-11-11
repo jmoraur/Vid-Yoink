@@ -1,11 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { api } from './api/client'
 import { NewDownload } from './pages/NewDownload'
 import { Queue } from './pages/Queue'
 import { Subscriptions } from './pages/Subscriptions'
-import { Presets } from './pages/Presets'
-import { Archive } from './pages/Archive'
 import { Settings } from './pages/Settings'
 import { Icon } from './components/ui/Icon'
 import { ThemeToggle } from './components/ui/ThemeToggle'
@@ -33,6 +31,11 @@ function QueueBadge() {
   return <span className="nav-badge">{active}</span>
 }
 
+function ArchiveRedirect() {
+  // keeps "?sub=…" so old links to one subscription's items still work
+  return <Navigate to={`/subscriptions/archive${useLocation().search}`} replace />
+}
+
 export default function App() {
   return (
     <div className="app">
@@ -42,19 +45,10 @@ export default function App() {
         </h1>
         <nav aria-label="Primary">
           <NavLink to="/" end>
-            <Icon name="download" /> <span>Download</span>
-          </NavLink>
-          <NavLink to="/queue">
-            <Icon name="list" /> <span>Queue</span> <QueueBadge />
+            <Icon name="download" /> <span>Downloads</span> <QueueBadge />
           </NavLink>
           <NavLink to="/subscriptions">
             <Icon name="rss" /> <span>Subscriptions</span>
-          </NavLink>
-          <NavLink to="/presets">
-            <Icon name="sliders" /> <span>Presets</span>
-          </NavLink>
-          <NavLink to="/archive">
-            <Icon name="archive" /> <span>Archive</span>
           </NavLink>
           <NavLink to="/settings">
             <Icon name="settings" /> <span>Settings</span>
@@ -64,12 +58,22 @@ export default function App() {
       </header>
       <VaultBanner />
       <Routes>
-        <Route path="/" element={<NewDownload />} />
-        <Route path="/queue" element={<Queue />} />
-        <Route path="/subscriptions" element={<Subscriptions />} />
-        <Route path="/presets" element={<Presets />} />
-        <Route path="/archive" element={<Archive />} />
+        <Route
+          path="/"
+          element={
+            <>
+              <NewDownload />
+              <Queue />
+            </>
+          }
+        />
+        <Route path="/subscriptions/*" element={<Subscriptions />} />
         <Route path="/settings" element={<Settings />} />
+        {/* addresses from before the three-section layout */}
+        <Route path="/queue" element={<Navigate to="/" replace />} />
+        <Route path="/presets" element={<Navigate to="/settings" replace />} />
+        <Route path="/archive" element={<ArchiveRedirect />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   )

@@ -158,7 +158,7 @@ Target main screen:
   - Done when: a migration test opens a version-1 database and reads the new columns;
     endpoint tests pass; an old database from `~/.local/share/yoink` still loads.
 
-- [ ] **2.2 Three sections instead of six**
+- [x] **2.2 Three sections instead of six**
   - `frontend/src/App.tsx`: Downloads (`/`), Subscriptions, Settings.
   - Presets: managed inside Settings; picked and saved from the options panel (as now).
   - Archive: a second view inside Subscriptions ("Downloaded items").
