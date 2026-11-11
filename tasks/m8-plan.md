@@ -92,7 +92,7 @@ Do this first. The new queue (Phase 2) is only useful if statuses are honest.
     again and continues from its `.part` file. Add a unit test for the start-up
     re-queue.
 
-- [ ] **1.5 Launcher finds Chrome too**
+- [x] **1.5 Launcher finds Chrome too**
   - Where: `scripts/yoink-app:92`.
   - How: try `chromium-browser`, `chromium`, `google-chrome`, `google-chrome-stable`,
     `brave-browser` in that order (all support `--app` and `--user-data-dir`). Update

@@ -89,9 +89,15 @@ if ! server_up; then
     server_up || fail "server did not become ready — see $LOG_DIR/server.log"
 fi
 
-CHROMIUM=$(command -v chromium-browser || command -v chromium || true)
+# Any Chromium-family browser will do: all of these support --app and
+# --user-data-dir, which is what the window-close shutdown relies on.
+CHROMIUM=""
+for c in chromium-browser chromium google-chrome google-chrome-stable brave-browser; do
+    CHROMIUM=$(command -v "$c" || true)
+    [ -n "$CHROMIUM" ] && break
+done
 [ -n "$CHROMIUM" ] || [ -n "${YOINK_BROWSER:-}" ] \
-    || fail "chromium not found (set YOINK_BROWSER to use another browser)"
+    || fail "no Chromium, Chrome or Brave found (install one, or set YOINK_BROWSER to use another browser)"
 
 # Dedicated app window. The private user-data-dir gives yoink its own browser
 # process we can wait on; a second launch of this script joins that process,

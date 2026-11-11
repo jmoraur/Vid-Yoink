@@ -57,7 +57,7 @@ optional `--port` and `--data-dir` flags.
 
 Environment overrides for the launcher: `YOINK_PORT`, `YOINK_DATA_DIR`, `YOINK_BROWSER`
 (e.g. `"firefox --new-window"` — but auto-shutdown-on-close only works with the default
-Chromium app mode), `YOINK_BIN` (server binary override).
+app window, which needs Chromium, Chrome or Brave), `YOINK_BIN` (server binary override).
 
 Data (database, vault) lives in `~/.local/share/yoink/`. Downloads default to
 `~/Downloads` (change in Settings, per-preset, or per-download). Logs:

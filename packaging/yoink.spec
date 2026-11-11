@@ -28,8 +28,9 @@ Requires:       curl
 # RPM Fusion's ffmpeg; the default ffmpeg-free lacks the encoders yoink
 # needs for merging/extraction/embedding (see README)
 Recommends:     ffmpeg
-# the desktop launcher opens a Chromium app-mode window and reports
-# startup errors via desktop notifications
+# the desktop launcher opens an app-mode window in Chromium (Chrome or
+# Brave work too, if already installed) and reports startup errors via
+# desktop notifications
 Recommends:     chromium
 Recommends:     libnotify
 
