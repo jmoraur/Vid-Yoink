@@ -77,7 +77,7 @@ Full findings, steps and done-checks: [m8-plan.md](m8-plan.md).
 
 - [x] Phase 1 — correctness and safety (steps 1.1–1.8; CI green on the pushed branch)
 - [x] Phase 2 — interface rework (steps 2.1–2.7; version 0.2.0)
-- [ ] Phase 3 — new features (optional, pick per item)
+- [x] Phase 3 — new features (all five; version 0.3.0; branch `m8-phase-3`, not pushed)
 
 Verified during M8: 54 backend tests + wording check green; real YouTube download,
 repeat (skipped) and unavailable video (error) with yt-dlp 2026.10.26; foreign
@@ -90,6 +90,19 @@ Deviations from the plan, deliberate: Retry re-queues the same row instead of ad
 second one (so "Retry failed" cannot pile up duplicates); the `site` column holds the
 domain ("youtube.com") rather than yt-dlp's extractor name; "Clear" under the "All"
 filter removes finished rows only, so failed ones stay retryable.
+
+Verified during Phase 3: 70 backend tests + wording check green. Live, on a throwaway
+copy (own data folder, spare port): three pasted links became three downloads; real
+notifications seen on the notification bus (and none with the setting off); a two-item
+YouTube subscription with a date filter had both items looked up, left out, remembered
+and not queued again; the vault opened itself after a restart with the key in the real
+KWallet, also after a password change, and stayed locked after opting out (test entry
+removed); a server started with `--exit-when-closed` survived page reloads and stopped
+10 s after the browser closed; the real launcher run in tab mode and in app-window mode
+(stand-in browsers) left no process and no open port.
+
+Not checked live: the 60-second limit when no window ever opens (unit test only), and a
+real Firefox tab (a headless Chrome stood in for it).
 
 Not done here: the app-menu entry on this machine still starts the installed 0.1.0 RPM
 (old launcher) until a 0.2.0 RPM is installed or `scripts/install_desktop.sh` is run.

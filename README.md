@@ -12,6 +12,9 @@ example) are refused.
 - **One Downloads screen**: paste a link, press Download, and watch it right there.
   Rows show a thumbnail, format, size, site and how long ago; one click opens the folder.
   Failed downloads say what went wrong in plain words and what to do next.
+- **Several links at once**: paste a list, one link per line, and each becomes its own
+  download.
+- **Desktop notification** when a download finishes or fails (switch it off in Settings).
 - **The queue survives closing the app**: unfinished downloads carry on from where they
   stopped the next time you open it.
 - **Any yt-dlp site** works — the URL is probed and handed to yt-dlp's extractors.
@@ -26,10 +29,15 @@ example) are refused.
   media library never causes re-downloads**. "Downloaded items" (under Subscriptions)
   lists what is remembered; remove an entry to allow that video again. An item that
   keeps failing is given up on after three tries instead of being queued forever.
+- **Subscription filters**: only items uploaded on or after a date, only titles that
+  contain a word, skip Shorts, skip live streams. What a filter leaves out is remembered,
+  so later checks do not look at it again; changing the filters starts that memory afresh.
 - **Credential vault**: per-site logins and cookies.txt contents, encrypted with a master
   password (scrypt + AES-256-GCM). Secrets are held in memory only while unlocked and are
   passed to yt-dlp as in-memory streams — never written to disk in plaintext.
-  `--cookies-from-browser` is also supported as a passthrough.
+  `--cookies-from-browser` is also supported as a passthrough. If you want, the vault
+  unlocks itself at launch using your desktop keyring (KWallet, GNOME Keyring); this is
+  off unless you switch it on.
 - Light and dark themes, responsive layout, keyboard-friendly.
 
 ## Install (Fedora)
@@ -59,12 +67,18 @@ released, and nothing keeps running in the background. Unfinished downloads stay
 queue and carry on from where they stopped the next time you open the app. Launching
 a second time while a window is open just adds a window to the same instance.
 
+The dedicated window needs Chromium, Chrome or Brave. Without one of them, Yoink opens
+as a normal tab in your default browser, and the server stops by itself about ten
+seconds after you close the last Yoink tab.
+
 Or run the bare server: `yoink` (serves http://127.0.0.1:8090, Ctrl+C to stop), with
-optional `--port` and `--data-dir` flags.
+optional `--port` and `--data-dir` flags. It keeps running without any window, so
+subscriptions are checked in the background; add `--exit-when-closed` to make it stop
+once the last browser tab showing it has closed.
 
 Environment overrides for the launcher: `YOINK_PORT`, `YOINK_DATA_DIR`, `YOINK_BROWSER`
-(e.g. `"firefox --new-window"` — but auto-shutdown-on-close only works with the default
-app window, which needs Chromium, Chrome or Brave), `YOINK_BIN` (server binary override).
+(e.g. `"firefox --new-window"`, opens a normal tab in that browser instead of the app
+window), `YOINK_BIN` (server binary override).
 
 Data (database, vault) lives in `~/.local/share/yoink/`. Downloads default to
 `~/Downloads` (change in Settings, per-preset, or per-download). Logs:
@@ -109,6 +123,18 @@ tag `v<version>` and push — CI builds the RPM and attaches it to the GitHub re
 - The playlist preview on the download page shows the first 500 entries. Subscription
   checks read up to 5000, so only truly enormous playlists can have items missed.
 - Changing "Parallel downloads" in Settings takes effect after a restart.
+- Subscription filters: the playlist listing shows titles, Shorts and live state, so
+  those are judged before anything is queued. The upload date is only known once the
+  item is looked up, so with a date filter each new item appears briefly under "Now"
+  and disappears again if it is too old. Shorts are recognised by their `/shorts/` link,
+  which is how a channel lists them; a Short that sits in an ordinary playlist is not
+  recognised.
+- Vault unlock from the keyring needs the `secret-tool` command (package `libsecret`).
+  The keyring holds the vault key, not your master password. Anyone who can use your
+  logged-in desktop session can then use the stored logins, which is why it is opt-in.
+- In a normal browser tab (no Chromium, Chrome or Brave), the server stops when the tab
+  is gone. If the browser unloads the tab to save memory, that counts as closed; open
+  Yoink again from the menu and unfinished downloads carry on.
 - If you forget the vault master password, the vault contents are unrecoverable (that's
   the point) — delete `~/.local/share/yoink/vault.json` and start over.
 - yt-dlp may rotate cookies during a session; yoink deliberately discards those updates.

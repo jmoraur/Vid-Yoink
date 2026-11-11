@@ -3,7 +3,8 @@
 Written 2026-11-11 after a fresh-eyes review of the whole project (backend read in
 full, app run with sample data, every page viewed in light, dark and phone width).
 Phases 1 and 2 were built on 2026-11-11 (branch `m8-fixes-and-redesign`, one commit per
-step) and pushed; CI is green. Open: Phase 3 is not started.
+step) and pushed; CI is green. Phase 3 was built the same day on branch `m8-phase-3`
+(one commit per feature, not pushed yet). Nothing is open.
 
 **How to resume:** start at the first unchecked box. Each step lists where to change
 the code and how to know it is done.
@@ -214,16 +215,36 @@ Target main screen:
 
 ## Phase 3 — New features (after Phase 2, each optional)
 
-- [ ] **Desktop notification** when a download finishes or fails (`notify-send` from
+- [x] **3.1 Desktop notification** when a download finishes or fails (`notify-send` from
       the server; `libnotify` is already a recommended package).
-- [ ] **Paste several URLs at once** (one per line → one job each).
-- [ ] **Subscription filters**: only newer than a date, title contains, skip shorts and
+  - Built: `yoink/notify.py`, called from `JobManager`; a checkbox in Settings turns it
+    off. Cancelled jobs stay quiet.
+- [x] **3.2 Paste several URLs at once** (one per line → one job each).
+  - Built in the frontend only: the paste field grows a row per line; a link the server
+    refuses stays in the field, the others are queued.
+- [x] **3.3 Subscription filters**: only newer than a date, title contains, skip shorts and
       live streams. Filtered items must be remembered so they are not re-checked every
       time.
-- [ ] **Unlock the vault from the desktop keyring** (opt-in), so the password is not
+  - Built: `yoink/filters.py` holds the rules; database version 3 adds
+    `subscriptions.filters_json` and the table `filtered` (the memory). The check judges
+    what the listing shows (title, Shorts link, live state); the download judges the
+    upload date through yt-dlp's `match_filter` and remembers it the same way. A job
+    whose items were all left out removes its own row.
+  - Found on the way and fixed: a bare channel address (`youtube.com/@name`) lists its
+    tabs, not videos, so such a subscription silently found nothing. Checks and seeding
+    now open the tabs.
+- [x] **3.4 Unlock the vault from the desktop keyring** (opt-in), so the password is not
       asked on every launch.
-- [ ] **Stop the server when the last window closes**, from inside the server (it
+  - Built: `yoink/keyring.py` talks to `secret-tool`; what is stored is the derived key,
+    not the password; one entry per vault file; 5-second limit on every call.
+- [x] **3.5 Stop the server when the last window closes**, from inside the server (it
       already knows its connected windows). Makes Firefox and others work like Chromium.
+  - Built: `yoink --exit-when-closed` (10 s grace, 60 s for the first window). The
+    launcher uses it only when it opens a normal tab; the Chromium app window keeps the
+    old, immediate way.
+  - Found on the way and fixed: the server did *not* really know its windows. A closed
+    one was only noticed when the next event failed to send. The WebSocket handler now
+    notices at once, which also removed a 5-second wait at every shutdown.
 
 Left out on purpose: cross-platform packaging, user accounts, anything multi-user.
 

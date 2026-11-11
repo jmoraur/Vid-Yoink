@@ -1,6 +1,6 @@
 [project]
 name = "yoink"
-version = "0.2.0"
+version = "0.3.0"
 description = "Local web UI for yt-dlp: downloads, playlists, subscriptions, credential vault"
 license = "PolyForm-Noncommercial-1.0.0"
 license-files = ["LICENSE"]

@@ -1,5 +1,5 @@
 Name:           yoink
-Version:        0.2.0
+Version:        0.3.0
 Release:        1%{?dist}
 Summary:        Local web UI for yt-dlp: downloads, playlists, subscriptions, credential vault
 License:        PolyForm-Noncommercial-1.0.0
@@ -29,10 +29,13 @@ Requires:       curl
 # needs for merging/extraction/embedding (see README)
 Recommends:     ffmpeg
 # the desktop launcher opens an app-mode window in Chromium (Chrome or
-# Brave work too, if already installed) and reports startup errors via
-# desktop notifications
+# Brave work too, if already installed; without any of them it opens a tab
+# in the default browser)
 Recommends:     chromium
+# notify-send: finished/failed downloads and launcher start-up errors
 Recommends:     libnotify
+# secret-tool: optional unlock of the vault from the desktop keyring
+Recommends:     libsecret
 
 %description
 Yoink is a local web UI for yt-dlp: downloads with live progress, playlist
@@ -66,6 +69,15 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/yoink.desktop
 %{_datadir}/icons/hicolor/scalable/apps/yoink.svg
 
 %changelog
+* Wed Nov 11 2026 Jan Moraru <jan@moraru.ch> - 0.3.0-1
+- Desktop notification when a download finishes or fails (can be switched off)
+- Paste several links at once, one per line
+- Subscription filters: upload date, title, skip Shorts, skip live streams
+- A bare channel address works as a subscription
+- Optional: unlock the vault from the desktop keyring at launch
+- Without Chromium/Chrome/Brave the launcher opens a tab in the default
+  browser; the server stops itself when the last tab closes
+
 * Wed Nov 11 2026 Jan Moraru <jan@moraru.ch> - 0.2.0-1
 - Failed downloads are reported as failed (were saved as finished)
 - Requests from other websites are refused (Host and Origin check)
