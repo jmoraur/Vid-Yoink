@@ -165,7 +165,7 @@ Target main screen:
   - Old addresses (`/queue`, `/presets`, `/archive`) redirect.
   - Done when: every old feature is still reachable in at most two clicks.
 
-- [ ] **2.3 One Downloads screen**
+- [x] **2.3 One Downloads screen**
   - Merge `pages/NewDownload.tsx` and `pages/Queue.tsx`.
   - Paste bar always on top; options (`OptionsForm`, `PresetBar`) in a panel that
     opens from the ⚙ button and shows a one-line summary when closed

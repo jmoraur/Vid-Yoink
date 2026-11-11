@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { api } from './api/client'
-import { NewDownload } from './pages/NewDownload'
-import { Queue } from './pages/Queue'
+import { Downloads } from './pages/Downloads'
 import { Subscriptions } from './pages/Subscriptions'
 import { Settings } from './pages/Settings'
 import { Icon } from './components/ui/Icon'
@@ -58,15 +57,7 @@ export default function App() {
       </header>
       <VaultBanner />
       <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <NewDownload />
-              <Queue />
-            </>
-          }
-        />
+        <Route path="/" element={<Downloads />} />
         <Route path="/subscriptions/*" element={<Subscriptions />} />
         <Route path="/settings" element={<Settings />} />
         {/* addresses from before the three-section layout */}

@@ -40,24 +40,97 @@
   flex: 1;
 }
 
-/* --- hero download form --- */
+/* --- paste bar: link field, options toggle, Download --- */
 
 .download-form {
   display: flex;
   gap: var(--sp-2);
-  margin-bottom: var(--sp-4);
 }
 
 .download-form input {
   flex: 1;
+  min-width: 0;
   padding: 0.7rem 0.9rem;
   font-size: var(--fs-base);
   background: var(--surface);
   font-family: var(--font-mono);
 }
 
-.download-form button {
+.download-form button[type='submit'] {
   padding: 0.7rem 1.2rem;
+}
+
+.download-form .options-toggle {
+  padding: 0 0.8rem;
+  background: var(--surface);
+}
+
+.download-form .options-toggle.active {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.options-summary {
+  margin: var(--sp-2) 0 var(--sp-4);
+  padding-inline: 0.15rem;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.options-panel {
+  margin-bottom: var(--sp-4);
+}
+
+button.link {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+button.link:hover:not(:disabled) {
+  background: none;
+  color: var(--accent-hover);
+}
+
+/* --- the two lists: Now and Earlier --- */
+
+.job-list {
+  margin-top: var(--sp-5);
+}
+
+.list-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+
+.list-head h2 {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.list-head .filters {
+  margin: 0;
+}
+
+.list-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-left: auto;
 }
 
 /* --- chips: data-colored, never color-only (text is always present) --- */
@@ -607,6 +680,18 @@
   }
 
   .download-form {
-    flex-direction: column;
+    flex-wrap: wrap;
+  }
+
+  .download-form input {
+    flex-basis: 100%;
+  }
+
+  .download-form button[type='submit'] {
+    flex: 1;
+  }
+
+  .download-form .options-toggle {
+    padding-block: 0.7rem;
   }
 }

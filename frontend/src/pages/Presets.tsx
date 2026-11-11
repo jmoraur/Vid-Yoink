@@ -3,19 +3,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { DEFAULT_OPTIONS, type DownloadOptions, type Preset } from '../api/types'
 import { OptionsForm } from '../components/options/OptionsForm'
+import { summarize } from '../components/options/summarize'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Icon } from '../components/ui/Icon'
 import { Skeleton } from '../components/ui/Skeleton'
-
-function summarize(o: DownloadOptions): string {
-  const parts = [o.mode === 'audio' ? `audio (${o.audio_format})` : 'video']
-  if (o.mode === 'video' && o.max_height) parts.push(`≤${o.max_height}p`)
-  if (o.output_dir) parts.push(`→ ${o.output_dir}`)
-  if (o.sponsorblock_remove.length) parts.push('sponsorblock')
-  if (o.extra_args) parts.push(`extra: ${o.extra_args}`)
-  return parts.join(' · ')
-}
 
 function PresetEditor({
   preset,
