@@ -68,6 +68,17 @@
 - [x] Publish: GitHub repo Vid-Yoink, tag v0.1.0, release with RPM attached, CI
       workflow for future releases
 
+## M8 — Fixes + interface rework (planned 2026-11-11, not started)
+
+Fresh-eyes review found two confirmed problems (failed downloads saved as "finished";
+any web page can reach the local server), a launcher that only finds Chromium, weak
+spots in subscriptions, and an interface that needs a new layout more than new paint.
+Full findings, steps and done-checks: [m8-plan.md](m8-plan.md).
+
+- [ ] Phase 1 — correctness and safety (steps 1.1–1.8)
+- [ ] Phase 2 — interface rework (steps 2.1–2.7)
+- [ ] Phase 3 — new features (optional, pick per item)
+
 ## Deferred / future reference
 
 - **Public cross-platform distribution** — analyzed 2026-07-10, initially deferred;
